@@ -1,0 +1,64 @@
+== ETAPA 1: recorte de ventanas ==
+ventanas: 48 tamaño de ventana (alto, ancho): (182, 111)
+fotogramas cuya figura toca el borde de la ventana (izq, der, arriba, abajo en px):
+   ('pensando', 0, 2, 0, 0, 2)
+   ('pensando', 2, 0, 0, 32, 0)
+   ('pensando', 3, 0, 1, 0, 1)
+   ('responde', 0, 0, 11, 4, 0)
+   ('responde', 1, 14, 15, 18, 0)
+   ('responde', 2, 13, 0, 25, 0)
+   ('responde', 3, 0, 1, 3, 1)
+   ('leyendo', 0, 3, 14, 0, 49)
+   ('leyendo', 1, 14, 22, 0, 56)
+   ('leyendo', 2, 23, 15, 0, 42)
+   ('leyendo', 3, 16, 3, 0, 54)
+   ('escribiendo', 0, 8, 26, 0, 70)
+   ('escribiendo', 1, 41, 1, 0, 65)
+   ('escribiendo', 2, 40, 11, 0, 111)
+   ('escribiendo', 3, 19, 3, 0, 112)
+   ('necesita', 0, 2, 18, 11, 111)
+   ('necesita', 1, 26, 17, 7, 111)
+   ('necesita', 2, 18, 1, 9, 111)
+   ('necesita', 3, 1, 4, 9, 111)
+   ('falla', 0, 5, 3, 0, 111)
+   ('falla', 1, 3, 3, 0, 110)
+   ('falla', 2, 3, 3, 0, 110)
+   ('falla', 3, 3, 6, 0, 111)
+   ('para', 0, 7, 44, 0, 112)
+   ('para', 1, 48, 3, 0, 112)
+   ('para', 2, 3, 15, 0, 113)
+   ('para', 3, 17, 6, 0, 112)
+   ('terminado', 0, 32, 52, 6, 111)
+   ('terminado', 1, 64, 21, 14, 111)
+   ('terminado', 2, 21, 41, 8, 111)
+   ('terminado', 3, 55, 17, 19, 111)
+   ('baile', 0, 2, 18, 0, 111)
+   ('baile', 1, 27, 1, 0, 95)
+   ('baile', 2, 9, 1, 0, 103)
+   ('baile', 3, 1, 13, 0, 111)
+   ('hula', 0, 2, 1, 0, 112)
+   ('hula', 1, 1, 1, 0, 112)
+   ('hula', 2, 1, 6, 0, 113)
+   ('hula', 3, 1, 3, 0, 112)
+   ('duerme', 0, 29, 43, 0, 111)
+   ('duerme', 1, 54, 60, 0, 111)
+   ('duerme', 2, 51, 46, 0, 111)
+   ('duerme', 3, 48, 5, 0, 111)
+
+== ETAPA 2: eliminación de fondo (flood-fill, tol=28) ==
+  ('nueva', 0): figura=10292 px | primer plano perdido=0 | franja suave descartada=1087 | interior casi-fondo conservado=848
+  ('escribiendo', 0): figura=10318 px | primer plano perdido=0 | franja suave descartada=1238 | interior casi-fondo conservado=639
+  ('terminado', 0): figura=11820 px | primer plano perdido=0 | franja suave descartada=2096 | interior casi-fondo conservado=800
+  ('hula', 0): figura=11711 px | primer plano perdido=0 | franja suave descartada=1605 | interior casi-fondo conservado=352
+  ('duerme', 0): figura=8139 px | primer plano perdido=0 | franja suave descartada=891 | interior casi-fondo conservado=638
+
+== ETAPA 3: cuadrícula de píxeles (error de reconstruir con una cuadrícula de lado k; menor = más nítida) ==
+  ('nueva', 0): mejor k=3.0 (error 23.2/255) | k=4 entero: 30.9/255
+  ('escribiendo', 0): mejor k=3.0 (error 20.1/255) | k=4 entero: 25.5/255
+  ('terminado', 0): mejor k=3.0 (error 22.8/255) | k=4 entero: 30.7/255
+  ('hula', 0): mejor k=3.0 (error 24.3/255) | k=4 entero: 32.3/255
+
+== ETAPA 4: reducción a la cuadrícula nativa (error medio frente al original; cobertura del primer plano) ==
+  bloque-mediana (actual): error medio 26.1/255 | cobertura 97.3%
+  muestreo central (nearest): error medio 29.1/255 | cobertura 96.2%
+  moda del bloque: error medio 32.3/255 | cobertura 97.3%

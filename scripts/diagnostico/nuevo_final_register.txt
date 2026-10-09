@@ -1,0 +1,208 @@
+  // ---------- El panel acoplado: si lo cierra la persona, Emi vuelve a la banda y se queda ahí ----------
+
+  on('ui.close', async ($, e, next) => {
+    if (e.id === PANEL) {
+      await update($, panel, () => false).catch(() => undefined)
+      if (e.origin.kind === 'person') {
+        await guardarAjustes($, { modo: 'banda' }).catch(() => undefined)
+      }
+    }
+    return next(e)
+  }).catch(($, e, next) => next(e))
+
+  // ---------- La barra de Emi, encima del cuadro de texto ----------
+
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    vista = { columnas: e.viewport?.columns ?? 0, filas: e.viewport?.rows ?? 0, isFullscreen: e.viewport?.isFullscreen ?? null }
+    const aj = await read($, ajustes)
+    // Con el panel abierto Emi vive allí: la banda no la repite.
+    if (e.props.hasSurvey || aj.tamano === 'oculta' || (await read($, panel))) {
+      return next(e)
+    }
+    const a = await read($, animo)
+    const n = await read($, tic)
+    const mas = await read($, otras)
+    const ahora = Date.now()
+    const color = COLORES[a.estado]
+    const dicho = textoEstado(a, ahora, n)
+    const extra = [a.detalle, mas > 0 ? `+${mas} ${mas === 1 ? 'conversación' : 'conversaciones'} en marcha` : ''].filter(Boolean)
+
+    const resto = await next(e).catch(() => undefined)
+    const ajeno = tieneContenido(resto) ? resto : null
+
+    // En el terminal, el mayor sprite que cabe en las filas que concede el motor; si no cabe ninguno, la línea compacta.
+    const tope = topeDe(aj.tamano)
+    const tam = e.surface === 'terminal' ? elegirTam(e.props.maxRows - 1, e.props.bodyColumns - TEXTO_COLUMNAS, tope) : null
+
+    if (aj.tamano === 'compacta' || (e.surface === 'terminal' && !tam)) {
+      const { Box, Button, Text } = $.ui.resolve(e)
+      const puntos = a.estado === 'pensando' || a.estado === 'responde' ? '.'.repeat(1 + (n % 3)) : ''
+      const linea = (
+        <Box flexDirection="row" gap={1}>
+          <Text color={color} bold wrap="truncate-end">
+            {CARAS[a.estado]} {NOMBRE}
+          </Text>
+          <Text color={color} wrap="truncate-end">
+            · {dicho.replace('…', puntos)}
+          </Text>
+          <Text dimColor wrap="truncate-end">
+            {extra.length ? `· ${extra.join(' · ')}` : ''}
+          </Text>
+          <Button key="emi-grande" label="agrandar" onPress={() => update($, ajustes, x => ({ ...x, tamano: 'normal' as const }))} />
+        </Box>
+      )
+      return ajeno ? (
+        <Box flexDirection="column">
+          {linea}
+          {ajeno}
+        </Box>
+      ) : (
+        linea
+      )
+    }
+
+    if (e.surface === 'terminal' && tam) {
+      const { Box, Button, Raster, Text } = $.ui.resolve(e)
+      const c = celdas(tam, fotograma(a.estado, tam, n))
+      const reducido = tam !== tope && aj.tamano !== 'mini'
+      const lineas = reducido ? [...extra, 'más grande: /emi panel'] : extra
+      const banda = (
+        <Box flexDirection="row" gap={1}>
+          <Raster key="emi" columns={c.columnas} rows={c.filas} cells={c.cells} />
+          <Box flexDirection="column">
+            <Text color={LILA} bold wrap="truncate-end">
+              {NOMBRE}
+            </Text>
+            <Text color={color} bold wrap="truncate-end">
+              {dicho}
+            </Text>
+            {lineas.map(linea => (
+              <Text key={linea} dimColor wrap="truncate-end">
+                {linea}
+              </Text>
+            ))}
+            <Button key="emi-compacta" label="compacta" onPress={() => update($, ajustes, x => ({ ...x, tamano: 'compacta' as const }))} />
+          </Box>
+        </Box>
+      )
+      return ajeno ? (
+        <Box flexDirection="column">
+          {banda}
+          {ajeno}
+        </Box>
+      ) : (
+        banda
+      )
+    }
+
+    // La app de escritorio, el editor y el móvil dibujan un SVG (sin Raster): escala entera, sin límite de filas de terminal.
+    const { Box, Button, Svg, Text } = $.ui.resolve(e)
+    const tamSvg: Tam = aj.tamano === 'grande' ? 'XL' : aj.tamano === 'mini' ? 'N' : 'L'
+    const d = dibujoSvg(tamSvg, fotograma(a.estado, tamSvg, n))
+    const escala = 2
+    const banda = (
+      <Box flexDirection="row" gap={1}>
+        <Svg source={d.source} alt={`${NOMBRE}: ${a.estado}`} width={d.ancho * escala} height={d.alto * escala} />
+        <Box flexDirection="column">
+          <Text color={LILA} bold wrap="truncate-end">
+            {NOMBRE}
+          </Text>
+          <Text color={color} bold wrap="truncate-end">
+            {dicho}
+          </Text>
+          {extra.map(linea => (
+            <Text key={linea} dimColor wrap="truncate-end">
+              {linea}
+            </Text>
+          ))}
+          <Button key="emi-compacta" label="compacta" onPress={() => update($, ajustes, x => ({ ...x, tamano: 'compacta' as const }))} />
+        </Box>
+      </Box>
+    )
+    return ajeno ? (
+      <Box flexDirection="column">
+        {banda}
+        {ajeno}
+      </Box>
+    ) : (
+      banda
+    )
+  })
+
+  // ---------- El panel de Emi: el mayor sprite que cabe en el hueco real del panel ----------
+
+  on('ui.render', { component: 'Pane', requestId: PANEL }, async ($, e) => {
+    const aj = await read($, ajustes)
+    const a = await read($, animo)
+    const n = await read($, tic)
+    const mas = await read($, otras)
+    const ahora = Date.now()
+    const color = COLORES[a.estado]
+    const dicho = textoEstado(a, ahora, n)
+    const extra = [a.detalle, mas > 0 ? `+${mas} ${mas === 1 ? 'conversación' : 'conversaciones'} en marcha` : ''].filter(Boolean).join(' · ')
+    const filas = e.props.scroll.bodyRows
+    const columnas = e.props.bodyColumns
+    const volver = () => aBanda($)
+
+    if (e.surface === 'terminal') {
+      const { Box, Button, Raster, Text } = $.ui.resolve(e)
+      const plan = planPanel(filas, columnas, topeDe(aj.tamano))
+      if (!plan) {
+        return (
+          <Box flexDirection="column">
+            <Text color={LILA} bold wrap="wrap">
+              {NOMBRE}: el panel es muy pequeño ({columnas} x {filas}).
+            </Text>
+            <Button key="emi-volver" label="volver a la banda" onPress={volver} />
+          </Box>
+        )
+      }
+      const m = medidas(plan.tam)
+      const c = celdas(plan.tam, fotograma(a.estado, plan.tam, n))
+      const texto = (
+        <Box flexDirection="column">
+          <Text color={LILA} bold wrap="truncate-end">
+            {NOMBRE} · {m.ancho} x {m.alto}
+          </Text>
+          <Text color={color} bold wrap="truncate-end">
+            {dicho}
+          </Text>
+          <Text dimColor wrap="truncate-end">
+            {extra || ' '}
+          </Text>
+          <Button key="emi-volver" label="volver a la banda" onPress={volver} />
+        </Box>
+      )
+      return plan.texto === 'abajo' ? (
+        <Box flexDirection="column">
+          <Raster key="emi-panel" columns={c.columnas} rows={c.filas} cells={c.cells} />
+          {texto}
+        </Box>
+      ) : (
+        <Box flexDirection="row" gap={1}>
+          <Raster key="emi-panel" columns={c.columnas} rows={c.filas} cells={c.cells} />
+          {texto}
+        </Box>
+      )
+    }
+
+    const { Box, Button, Svg, Text } = $.ui.resolve(e)
+    const tamSvg: Tam = aj.tamano === 'grande' ? 'XL' : aj.tamano === 'mini' ? 'N' : 'L'
+    const d = dibujoSvg(tamSvg, fotograma(a.estado, tamSvg, n))
+    return (
+      <Box flexDirection="column">
+        <Svg source={d.source} alt={`${NOMBRE}: ${a.estado}`} width={d.ancho * 2} height={d.alto * 2} />
+        <Text color={LILA} bold wrap="truncate-end">
+          {NOMBRE}
+        </Text>
+        <Text color={color} bold wrap="truncate-end">
+          {dicho}
+        </Text>
+        <Text dimColor wrap="truncate-end">
+          {extra || ' '}
+        </Text>
+        <Button key="emi-volver" label="volver a la banda" onPress={volver} />
+      </Box>
+    )
+  })
+}

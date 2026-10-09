@@ -1,0 +1,5 @@
+respaldos/
+node_modules/
+__pycache__/
+*.npy
+*.log

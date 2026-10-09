@@ -1,0 +1,6 @@
+{
+  "name": "mascota-lab",
+  "version": "0.0.1",
+  "description": "Laboratorio de Emi: /emilab 26|40|52|64 dibuja a Emi a cuatro resoluciones en tu terminal y mide cuántas filas y columnas te deja el motor. No hace nada hasta que lo usas.",
+  "types": "./types/index.d.ts"
+}

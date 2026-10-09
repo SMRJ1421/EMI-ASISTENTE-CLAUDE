@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es2023", "lib": ["es2023"], "types": [],
+    "module": "esnext", "moduleResolution": "bundler",
+    "strict": true, "noUncheckedIndexedAccess": true,
+    "noEmit": true, "skipLibCheck": true,
+    "jsx": "react", "jsxFactory": "h", "jsxFragmentFactory": "Fragment"
+  },
+  "include": [
+    "C:/Users/ADMIN0~1/AppData/Local/Temp/claude/bundled-skills/2.1.294/ade7a8d9fa58f0cf54076ed1451ec935/plugin-authoring/types/claude-code.d.ts",
+    "C:/Users/Admin0011/.claude/dev-mods/da5e8c78-c252-4d1c-9f43-47016e40a9d5/mascota/hooks",
+    "C:/Users/Admin0011/.claude/dev-mods/da5e8c78-c252-4d1c-9f43-47016e40a9d5/mascota/types",
+    "C:/Users/Admin0011/.claude/dev-mods/da5e8c78-c252-4d1c-9f43-47016e40a9d5/mascota/tests"
+  ]
+}

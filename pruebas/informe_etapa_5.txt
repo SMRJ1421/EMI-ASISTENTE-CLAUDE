@@ -1,0 +1,16 @@
+== ETAPA 5: alineación en el lienzo común (28 x 48) ==
+estado: fila del suelo (último píxel opaco del cuerpo) y columna central por fotograma; salto = diferencia máxima entre fotogramas
+  nueva        suelo=[46, 46, 46, 47] (salto 1) | centro x=[13.0, 13.5, 13.0, 13.5] (salto 0.5)
+  pensando     suelo=[46, 47, 47, 46] (salto 1) | centro x=[13.5, 13.5, 12.5, 13.0] (salto 1.0)
+  responde     suelo=[47, 47, 46, 46] (salto 1) | centro x=[12.5, 12.5, 13.5, 13.5] (salto 1.0)
+  leyendo      suelo=[47, 47, 47, 47] (salto 0) | centro x=[13.0, 14.0, 11.5, 12.0] (salto 2.5)
+  escribiendo  suelo=[47, 46, 47, 47] (salto 1) | centro x=[12.0, 12.0, 12.0, 12.0] (salto 0.0)
+  necesita     suelo=[46, 47, 47, 46] (salto 1) | centro x=[12.0, 11.5, 12.0, 12.5] (salto 1.0)
+  falla        suelo=[46, 46, 46, 46] (salto 0) | centro x=[13.0, 13.0, 13.0, 14.0] (salto 1.0)
+  para         suelo=[45, 46, 46, 46] (salto 1) | centro x=[13.5, 13.0, 12.5, 13.5] (salto 1.0)
+  terminado    suelo=[44, 43, 44, 44] (salto 1) | centro x=[13.0, 12.5, 13.0, 13.0] (salto 0.5)
+  baile        suelo=[45, 44, 46, 45] (salto 2) | centro x=[12.0, 12.0, 11.5, 11.0] (salto 1.0)
+  hula         suelo=[45, 45, 45, 46] (salto 1) | centro x=[13.0, 13.0, 13.0, 13.5] (salto 0.5)
+  duerme       suelo=[46, 46, 45, 46] (salto 1) | centro x=[13.0, 13.0, 13.0, 12.0] (salto 1.0)
+saltos verticales >=2 px: [('baile', 2)]
+saltos horizontales >=2 px: [('leyendo', 2.5)]

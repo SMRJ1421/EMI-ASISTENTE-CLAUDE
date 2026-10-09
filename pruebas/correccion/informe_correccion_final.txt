@@ -1,0 +1,38 @@
+rejilla global kx=4.75 ky=4.75 | muestreo: borde
+lienzo común: 26 x 40 píxeles -> 20 filas de terminal en grande/normal, 10 en mini
+mini: 13 x 20 píxeles
+paleta: 88 colores (había 60)
+error medio de cuantización: 4.3/255 (antes 6,1)
+
+== VALIDACIÓN DE LOS 48 FOTOGRAMAS ==
+partición de los paneles (píxeles que pertenecen a dos fotogramas vecinos): ninguno
+cobertura media del primer plano: 96.3% (mínima 94.4%)
+fotogramas con sprites vecinos solapados (se separan por el punto de menor contacto): 12
+    ('leyendo', 0, (0, 4))
+    ('leyendo', 1, (4, 23))
+    ('para', 1, (33, 0))
+    ('para', 2, (0, 0))
+    ('terminado', 0, (0, 9))
+    ('terminado', 1, (9, 13))
+    ('terminado', 2, (13, 15))
+    ('baile', 0, (0, 0))
+    ('hula', 2, (0, 0))
+    ('duerme', 0, (0, 28))
+    ('duerme', 1, (28, 27))
+    ('duerme', 2, (27, 26))
+problemas reales (contaminación, restos, cobertura baja): 0
+
+alineación (desviación entre el movimiento del centro de masa original y el nativo, en píxeles nativos):
+  nueva        desviación x 0.5  y 0.2
+  pensando     desviación x 0.9  y 0.2
+  responde     desviación x 0.3  y 1.0
+  leyendo      desviación x 0.5  y 0.2
+  escribiendo  desviación x 0.3  y 0.4
+  necesita     desviación x 0.8  y 0.2
+  falla        desviación x 0.4  y 0.2
+  para         desviación x 1.5  y 0.4
+  terminado    desviación x 0.7  y 1.8
+  baile        desviación x 1.1  y 1.2
+  hula         desviación x 0.4  y 1.0
+  duerme       desviación x 0.3  y 0.2
+desviación máxima: 1.8 píxeles nativos

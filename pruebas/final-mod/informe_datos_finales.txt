@@ -1,0 +1,3 @@
+píxeles grises sueltos eliminados: 7
+sprites_nuevo.ts: 429,307 bytes (sin comprimir serían ~686,160)
+ida y vuelta (TS -> filas): 240 fotogramas comparados, 0 diferencias

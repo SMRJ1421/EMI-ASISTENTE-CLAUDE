@@ -1,0 +1,19 @@
+lienzo actual: 26 x 40 píxeles de sprite (rejilla de 4.75 px del original) -> cubre 123.5 x 190.0 px del PNG
+
+== GEOMETRÍA DE CADA RESOLUCIÓN (siempre el mismo alto de PNG, píxel cuadrado) ==
+  40x60: paso de muestreo 3.167 px del original (los dos ejes iguales) | píxeles de muestreo por píxel del dibujo = 1.50 | cubre 126.7 x 190.0 px | celdas de terminal: 40 columnas x 30 filas
+  52x80: paso de muestreo 2.375 px del original (los dos ejes iguales) | píxeles de muestreo por píxel del dibujo = 2.00 | cubre 123.5 x 190.0 px | celdas de terminal: 52 columnas x 40 filas
+  64x96: paso de muestreo 1.979 px del original (los dos ejes iguales) | píxeles de muestreo por píxel del dibujo = 2.40 | cubre 126.7 x 190.0 px | celdas de terminal: 64 columnas x 48 filas
+
+== FIDELIDAD FRENTE AL PNG ORIGINAL (48 fotogramas) ==
+  40x60: error medio 27.3/255 | cobertura del primer plano 97.4% (mín 95.4%) | píxeles del original fuera del lienzo (cortados): 98 | muestras que difieren del píxel nativo: 31.8%
+  52x80: error medio 20.0/255 | cobertura del primer plano 98.6% (mín 97.8%) | píxeles del original fuera del lienzo (cortados): 114 | muestras que difieren del píxel nativo: 26.8%
+  64x96: error medio 17.9/255 | cobertura del primer plano 98.7% (mín 97.8%) | píxeles del original fuera del lienzo (cortados): 98 | muestras que difieren del píxel nativo: 29.1%
+  (para comparar: el sprite actual 26x40 tiene cobertura 96,3% y por definición 0% de muestras distintas)
+
+== LÍMITES DEL RASTER (medidos sobre los datos reales) ==
+  40x60: 1200 celdas por fotograma | datos por redibujo 14.1 KB (18.8 KB en base64) | pares (arriba,abajo) distintos por fotograma, máximo = 482 (límite del Raster: 1024) | error de cuantización 4.8/255
+  52x80: 2080 celdas por fotograma | datos por redibujo 24.4 KB (32.5 KB en base64) | pares (arriba,abajo) distintos por fotograma, máximo = 658 (límite del Raster: 1024) | error de cuantización 4.8/255
+  64x96: 3072 celdas por fotograma | datos por redibujo 36.0 KB (48.0 KB en base64) | pares (arriba,abajo) distintos por fotograma, máximo = 812 (límite del Raster: 1024) | error de cuantización 4.8/255
+  límites del motor: Raster hasta 512 columnas x 256 filas; el motor redibuja el band como mucho 30 veces por segundo en terminal (el mod usa 4)
+  límite de filas disponible: e.props.maxRows. En el modo de pantalla completa el hueco se limita a la mitad de las filas del terminal (incluido el cuadro de texto); fuera de él, a la altura del terminal. Hace falta medirlo en tu terminal.

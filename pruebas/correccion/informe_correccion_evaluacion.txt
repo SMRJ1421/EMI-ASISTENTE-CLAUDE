@@ -1,0 +1,45 @@
+== RECORTE CORREGIDO (cortes en los huecos entre figuras) ==
+desplazamiento del corte respecto a la celda nominal (px): máximo izq 13, der 13
+cortes donde NO hay hueco limpio (px de figura cortados en la columna de corte) : 17 de 48
+    ('responde', 0) contacto(izq,der)= (0, 5) | sliver de vecino eliminado = 96 px
+    ('responde', 1) contacto(izq,der)= (5, 6) | sliver de vecino eliminado = 76 px
+    ('responde', 2) contacto(izq,der)= (6, 0) | sliver de vecino eliminado = 36 px
+    ('leyendo', 0) contacto(izq,der)= (0, 4) | sliver de vecino eliminado = 0 px
+    ('leyendo', 1) contacto(izq,der)= (4, 23) | sliver de vecino eliminado = 0 px
+    ('leyendo', 2) contacto(izq,der)= (23, 0) | sliver de vecino eliminado = 119 px
+    ('escribiendo', 1) contacto(izq,der)= (0, 1) | sliver de vecino eliminado = 0 px
+    ('para', 0) contacto(izq,der)= (0, 33) | sliver de vecino eliminado = 76 px
+    ('para', 1) contacto(izq,der)= (33, 0) | sliver de vecino eliminado = 152 px
+    ('terminado', 0) contacto(izq,der)= (0, 9) | sliver de vecino eliminado = 0 px
+    ('terminado', 1) contacto(izq,der)= (9, 13) | sliver de vecino eliminado = 231 px
+    ('terminado', 2) contacto(izq,der)= (13, 15) | sliver de vecino eliminado = 12 px
+    ('terminado', 3) contacto(izq,der)= (15, 0) | sliver de vecino eliminado = 234 px
+    ('duerme', 0) contacto(izq,der)= (0, 28) | sliver de vecino eliminado = 0 px
+    ('duerme', 1) contacto(izq,der)= (28, 27) | sliver de vecino eliminado = 184 px
+    ('duerme', 2) contacto(izq,der)= (27, 26) | sliver de vecino eliminado = 0 px
+    ('duerme', 3) contacto(izq,der)= (26, 0) | sliver de vecino eliminado = 199 px
+fotogramas cuya figura propia sigue tocando el corte: [('leyendo', 0), ('leyendo', 1), ('para', 1), ('para', 2), ('terminado', 0), ('terminado', 1), ('terminado', 2), ('baile', 0), ('hula', 2), ('duerme', 0), ('duerme', 1), ('duerme', 2)]
+== CUADRÍCULA REAL (24 fotogramas, contraste de fase medio por periodo, en %) ==
+  eje x: 3.8:12.3 4.0:6.5 4.2:9.1 4.4:10.4 4.6:11.0 4.75:19.8 4.9:18.5 5.1:19.6 5.3:16.3 5.6:23.0 5.9:19.2 6.2:13.9
+  eje y: 3.8:12.0 4.0:9.8 4.2:11.6 4.4:12.9 4.6:13.8 4.75:17.9 4.9:16.1 5.1:11.7 5.3:13.3 5.6:12.6 5.9:13.6 6.2:14.5
+  grosor medio del contorno oscuro: horizontal 4,4 px, vertical 4,2 px (relación 1,05: píxel casi cuadrado)
+  -> rejilla elegida: cuadrada, k=4.75 px (único periodo con pico en los dos ejes; K=4 daba 6,5 % y 9,8 %)
+
+== FASE POR ESTADO (compartida por los 4 fotogramas, así no hay saltos entre ellos) ==
+  nueva        fase=(0.00, 3.25) error medio 30.6/255
+  pensando     fase=(0.00, 3.25) error medio 26.9/255
+  responde     fase=(4.00, 2.50) error medio 32.8/255
+  leyendo      fase=(2.00, 0.50) error medio 29.7/255
+  escribiendo  fase=(4.00, 1.00) error medio 29.2/255
+  necesita     fase=(1.00, 4.00) error medio 31.5/255
+  falla        fase=(4.50, 0.00) error medio 33.3/255
+  para         fase=(0.75, 4.25) error medio 38.6/255
+  terminado    fase=(1.00, 1.00) error medio 33.9/255
+  baile        fase=(2.50, 4.00) error medio 36.6/255
+  hula         fase=(0.25, 2.50) error medio 35.4/255
+  duerme       fase=(0.75, 0.50) error medio 32.2/255
+
+== VARIANTES DE MUESTREO (48 fotogramas) ==
+  V1 rejilla global (centro, fase compartida): error medio 29.9/255 | cobertura 96.4% | píxeles grises sueltos 858
+  V2 rejilla por fotograma (centro): error medio 27.3/255 | cobertura 96.2% | píxeles grises sueltos 757
+  V3 sin rejilla (promedio de área 1/5): error medio 32.4/255 | cobertura 96.4% | píxeles grises sueltos 2516

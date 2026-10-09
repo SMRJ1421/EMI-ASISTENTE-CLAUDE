@@ -1,0 +1,6 @@
+{
+  "name": "mascota",
+  "version": "0.1.0",
+  "description": "Emi, una mascota en pixel art que vive encima de donde escribes y reacciona a lo que hace Claude: piensa, lee, escribe, te avisa cuando te necesita, se asusta si algo falla y celebra al terminar. /emi para cambiar su tamaño, el sonido y los avisos.",
+  "types": "./types/index.d.ts"
+}

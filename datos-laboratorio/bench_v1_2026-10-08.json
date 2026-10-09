@@ -1,0 +1,44 @@
+{
+  "fecha": "2026-10-09T01:53:57.370Z",
+  "resultados": [
+    {
+      "fase": "A control: redibujar cada 250 ms (como el mod actual)",
+      "segundos": 12,
+      "ticks": 47,
+      "renders": 50,
+      "renderMs": 40,
+      "renderBytes": 960000,
+      "blits": 0,
+      "blitMs": 0,
+      "blitBytes": 0,
+      "saltados": 0,
+      "denegados": 0
+    },
+    {
+      "fase": "B blit, 4 fotogramas por segundo en los estados vivos",
+      "segundos": 12,
+      "ticks": 47,
+      "renders": 54,
+      "renderMs": 929,
+      "renderBytes": 1036800,
+      "blits": 41,
+      "blitMs": 126,
+      "blitBytes": 787200,
+      "saltados": 6,
+      "denegados": 0
+    },
+    {
+      "fase": "C blit, 8 fotogramas por segundo en los estados vivos",
+      "segundos": 12,
+      "ticks": 93,
+      "renders": 30,
+      "renderMs": 358,
+      "renderBytes": 358400,
+      "blits": 86,
+      "blitMs": 257,
+      "blitBytes": 1629440,
+      "saltados": 7,
+      "denegados": 0
+    }
+  ]
+}
