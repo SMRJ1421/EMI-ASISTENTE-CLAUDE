@@ -4,8 +4,8 @@ import re
 import numpy as np
 from PIL import Image, ImageDraw
 
-NUEVO = r"C:\Users\Admin0011\.claude\dev-mods\da5e8c78-c252-4d1c-9f43-47016e40a9d5\mascota\hooks\sprites.ts"
-VIEJO = r"C:\Users\Admin0011\.claude\dev-mods-backup\mascota-2026-10-08-antes-de-fidelidad\hooks\sprites.ts"
+NUEVO = r"C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\mod\hooks\sprites.ts"
+VIEJO = r"C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\respaldos\mascota-2026-10-08-antes-de-fidelidad\hooks\sprites.ts"
 NAMES = ["nueva", "pensando", "responde", "leyendo", "escribiendo", "necesita", "falla", "para", "terminado", "baile", "hula", "duerme"]
 
 

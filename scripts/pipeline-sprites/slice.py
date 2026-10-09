@@ -1,6 +1,6 @@
 from PIL import Image
 import numpy as np, sys, json
-im=Image.open(r"C:\Users\Admin0011\Downloads\Emilia Claude pixel de estados y emociones.png").convert("RGB")
+im=Image.open(r"C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\arte\Emilia Claude pixel de estados y emociones.png").convert("RGB")
 a=np.array(im).astype(int)
 print(im.size)
 bg=a[5,5]; print("bg",bg, a[1080,1440])

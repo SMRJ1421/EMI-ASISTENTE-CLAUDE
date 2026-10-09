@@ -1,4 +1,4 @@
-BASE = "C:/Users/Admin0011/.claude/dev-mods/da5e8c78-c252-4d1c-9f43-47016e40a9d5/mascota/hooks/"
+BASE = "C:/Users/Admin0011/Proyectos/mods-claude/emilia-mascota/mod/hooks/"
 
 # ---------- deteccion.ts (nuevo): qué cuenta como fallo real ----------
 open(BASE + "deteccion.ts", "w", encoding="utf-8").write('''// Qué cuenta como un fallo de verdad. Técnica vista en dgokcin/claude-pokemon-mod (sin licencia: solo la idea, reimplementada aquí):

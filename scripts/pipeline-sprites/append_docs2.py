@@ -1,7 +1,7 @@
 import io
 
 # ---------- INFORME_TECNICO_EMILIA.md: sección 13 ----------
-ruta = r"C:\Users\Admin0011\Downloads\INFORME_TECNICO_EMILIA.md"
+ruta = r"C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\docs\INFORME_TECNICO_EMILIA.md"
 t = open(ruta, encoding="utf-8").read()
 assert "## 13. Actualización" not in t
 t = t.rstrip("\n") + r'''
@@ -10,7 +10,7 @@ t = t.rstrip("\n") + r'''
 
 ## 13. Actualización: detección de fallos reales y celdas más ligeras (autorizado)
 
-Respaldo previo: `C:\Users\Admin0011\.claude\dev-mods-backup\mascota-2026-10-08-antes-de-fallos-y-celdas\`
+Respaldo previo: `C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\respaldos\mascota-2026-10-08-antes-de-fallos-y-celdas\`
 
 ### 13.1 Cambios en el mod principal
 
@@ -42,7 +42,7 @@ Sin cambios: panel acoplado, banda adaptativa, los 12 estados con sus 4 fotogram
 open(ruta, "w", encoding="utf-8").write(t)
 
 # ---------- INFORME_COMPARATIVO_MASCOTAS.md: resultado de bench v1 ----------
-ruta = r"C:\Users\Admin0011\Downloads\INFORME_COMPARATIVO_MASCOTAS.md"
+ruta = r"C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\docs\INFORME_COMPARATIVO_MASCOTAS.md"
 t = open(ruta, encoding="utf-8").read()
 assert "## 10. Resultados de bench.json" not in t
 t = t.rstrip("\n") + r'''
@@ -51,7 +51,7 @@ t = t.rstrip("\n") + r'''
 
 ## 10. Resultados de bench.json (medición real, 12 s por fase, panel acoplado, sprite 40×60)
 
-Datos: `C:\Users\Admin0011\.claude\mascota-lab\bench_v1_2026-10-08.json`. Tiempos medidos con el reloj de pared **dentro de los hooks** (incluyen esperas; no son CPU).
+Datos: `C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\datos-laboratorio\bench_v1_2026-10-08.json`. Tiempos medidos con el reloj de pared **dentro de los hooks** (incluyen esperas; no son CPU).
 
 | Fase | Pasadas de dibujo | Tiempo medio por pasada | Envíos `blit` | Tiempo medio por envío | Saltados | Denegados | Bytes de celdas |
 |---|---|---|---|---|---|---|---|

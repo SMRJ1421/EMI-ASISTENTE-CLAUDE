@@ -1,6 +1,6 @@
 from PIL import Image
 import numpy as np
-SRC=r"C:\Users\Admin0011\Downloads\Emilia Claude pixel de estados y emociones.png"
+SRC=r"C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\arte\Emilia Claude pixel de estados y emociones.png"
 im=Image.open(SRC).convert("RGB"); A=np.array(im).astype(int)
 BG=np.array([245,241,251])
 names=["nueva","pensando","responde","leyendo","escribiendo","necesita","falla","para","terminado","baile","hula","duerme"]

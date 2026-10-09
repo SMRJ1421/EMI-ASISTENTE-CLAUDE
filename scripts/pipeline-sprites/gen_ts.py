@@ -3,7 +3,7 @@ import json
 import os
 
 d = json.load(open("diag/sprites_corregidos.json"))
-mod = r"C:/Users/Admin0011/.claude/dev-mods/da5e8c78-c252-4d1c-9f43-47016e40a9d5/mascota/hooks/sprites.ts"
+mod = r"C:/Users/Admin0011/Proyectos/mods-claude/emilia-mascota/mod/hooks/sprites.ts"
 o = []
 o.append("// Generado a partir de «animacion de Emilia pixel de estados.png»: 12 estados, 4 fotogramas cada uno.")
 o.append("// L es la resolución nativa del dibujo (rejilla real de 4,75 px del original, muestreada sin mezclar colores) y X la mitad por vecino más cercano.")

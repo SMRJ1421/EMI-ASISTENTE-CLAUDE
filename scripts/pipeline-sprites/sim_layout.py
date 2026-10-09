@@ -2,7 +2,7 @@
 import json, re
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
-ts = open(r"C:/Users/Admin0011/.claude/dev-mods/da5e8c78-c252-4d1c-9f43-47016e40a9d5/mascota/hooks/sprites.ts", encoding="utf-8").read()
+ts = open(r"C:/Users/Admin0011/Proyectos/mods-claude/emilia-mascota/mod/hooks/sprites.ts", encoding="utf-8").read()
 alf = re.search(r'export const ALFABETO = "(.*?)"\n', ts).group(1)
 def tam(t):
     b = re.search(rf"  {t}: \{{\n    ancho: (\d+),\n    alto: (\d+),\n    paleta: (\[.*?\]),\n    estados: \{{\n(.*?)\n    \}},\n  \}},", ts, re.S)

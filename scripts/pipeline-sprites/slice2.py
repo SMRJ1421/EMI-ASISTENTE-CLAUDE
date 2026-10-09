@@ -1,6 +1,6 @@
 from PIL import Image
 import numpy as np
-im=Image.open(r"C:\Users\Admin0011\Downloads\Emilia Claude pixel de estados y emociones.png").convert("RGB")
+im=Image.open(r"C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\arte\Emilia Claude pixel de estados y emociones.png").convert("RGB")
 a=np.array(im).astype(int)
 bg=np.array([245,241,251])
 mask=np.abs(a-bg).sum(axis=2)>40

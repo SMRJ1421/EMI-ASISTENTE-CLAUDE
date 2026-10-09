@@ -1,5 +1,5 @@
 import json, re
-TS = r"C:/Users/Admin0011/.claude/dev-mods/da5e8c78-c252-4d1c-9f43-47016e40a9d5/mascota/hooks/sprites.ts"
+TS = r"C:/Users/Admin0011/Proyectos/mods-claude/emilia-mascota/mod/hooks/sprites.ts"
 ts = open(TS, encoding="utf-8").read()
 def unrle(t):
     o=[];i=0

@@ -118,7 +118,7 @@ for tam, d in datos.items():
     o.append("    },")
     o.append("  },")
 o.append("}")
-ruta = r"C:/Users/Admin0011/.claude/dev-mods/da5e8c78-c252-4d1c-9f43-47016e40a9d5/mascota-lab/hooks/sprites_nuevo.ts"
+ruta = r"C:/Users/Admin0011/Proyectos/mods-claude/emilia-mascota/laboratorio/hooks/sprites_nuevo.ts"
 open(ruta, "w", encoding="utf-8").write("\n".join(o) + "\n")
 P(f"sprites_nuevo.ts: {os.path.getsize(ruta):,} bytes (sin comprimir serían ~{sum(len(f) for d in datos.values() for e in d['estados'].values() for f in ['/'.join(r) for fr in e for r in [fr]]):,})")
 

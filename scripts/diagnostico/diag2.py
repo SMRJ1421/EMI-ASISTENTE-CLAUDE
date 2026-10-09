@@ -3,7 +3,7 @@ from PIL import Image, ImageDraw
 import numpy as np, collections, json, re
 from collections import deque
 
-SRC = r"C:\Users\Admin0011\Downloads\animacion de Emilia pixel de estados.png"
+SRC = r"C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\arte\animacion de Emilia pixel de estados.png"
 A = np.array(Image.open(SRC).convert("RGB")).astype(int)
 H0, W0 = A.shape[:2]
 names = ["nueva", "pensando", "responde", "leyendo", "escribiendo", "necesita", "falla", "para", "terminado", "baile", "hula", "duerme"]
@@ -202,7 +202,7 @@ for c, v in perdidos.most_common(8):
     P("   ", c, v)
 
 P("\n== ETAPA 7: conversión a datos de TypeScript (¿se pierde algo al escribir sprites.ts?) ==")
-ts = open(r"C:\Users\Admin0011\.claude\dev-mods\da5e8c78-c252-4d1c-9f43-47016e40a9d5\mascota\hooks\sprites.ts", encoding="utf-8").read()
+ts = open(r"C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\mod\hooks\sprites.ts", encoding="utf-8").read()
 mism = 0
 total = 0
 for n in names:

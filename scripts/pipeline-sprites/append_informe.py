@@ -1,4 +1,4 @@
-ruta = r"C:\Users\Admin0011\Downloads\INFORME_TECNICO_EMILIA.md"
+ruta = r"C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\docs\INFORME_TECNICO_EMILIA.md"
 texto = open(ruta, encoding="utf-8").read()
 assert "## 12. Actualización" not in texto
 
@@ -28,7 +28,7 @@ Decisión de diseño: **no se abre ningún panel por sorpresa**. Por defecto Emi
 - `mascota\hooks\sprites.ts` (nuevo, 429 307 B): `TAMANOS` con 5 tamaños × 12 estados × 4 fotogramas, paleta por tamaño, tramos comprimidos (`§` + longitud + color).
 - `mascota\hooks\register.tsx`: `topeDe`, `abrirPanel`, `aBanda`, `guardarAjustes`; hook `ui.close`; hook `ui.render` de `Pane` (`requestId: 'emi'`); banda adaptativa; comandos `panel` y `banda`; ajuste `modo` (`banda`|`panel`) y estado `panel`.
 - `mascota\types\index.d.ts`: `MascotaModo`, `modo` en `MascotaAjustes`, `panel` en el estado.
-- `mascota-lab\hooks\register.tsx`: `/emilab 13|26|40|52|64`, `/emilab pane`, medidas en `C:\Users\Admin0011\.claude\mascota-lab\medidas.json` (banda: `maxRows`, `bodyColumns`, `isFullscreen`; panel: `placement`, `bodyColumns`, `bodyRows`). Medición automática de una sola vez (marca `auto.txt`).
+- `mascota-lab\hooks\register.tsx`: `/emilab 13|26|40|52|64`, `/emilab pane`, medidas en `C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\datos-laboratorio\medidas.json` (banda: `maxRows`, `bodyColumns`, `isFullscreen`; panel: `placement`, `bodyColumns`, `bodyRows`). Medición automática de una sola vez (marca `auto.txt`).
 - Sin cambios: los 12 estados y sus 4 fotogramas, `estados.ts`, los avisos y sonidos de Windows, los indicadores de otras conversaciones, `turn.*`, `tool.call` y `classic.Notification`.
 
 ### 12.3 Pruebas (HECHO)
@@ -61,15 +61,15 @@ Datos medidos al generar: error de cuantización 4,3-5,3/255; cobertura del prim
 
 ### 12.7 Respaldos
 
-- `C:\Users\Admin0011\.claude\dev-mods-backup\mascota-2026-10-08-antes-de-fidelidad\` (antes de la corrección de fidelidad)
-- `C:\Users\Admin0011\.claude\dev-mods-backup\mascota-2026-10-08-1954-antes-del-panel\` (justo antes de esta actualización, versión de 26×40)
-- `C:\Users\Admin0011\.claude\dev-mods-backup\mascota-lab-2026-10-08-1954-antes-del-panel\`
+- `C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\respaldos\mascota-2026-10-08-antes-de-fidelidad\` (antes de la corrección de fidelidad)
+- `C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\respaldos\mascota-2026-10-08-1954-antes-del-panel\` (justo antes de esta actualización, versión de 26×40)
+- `C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\respaldos\mascota-lab-2026-10-08-1954-antes-del-panel\`
 
 Para volver atrás: copiar el contenido de la carpeta de respaldo sobre `...\dev-mods\...\mascota\`.
 
 ### 12.8 Imágenes de esta actualización
 
-`C:\Users\Admin0011\Downloads\diagnostico-emi\final-mod\`: `tamanos_*.png` (los 5 tamaños por estado, a partir de los datos finales), `simulacion_banda.png` y `simulacion_panel.png` (simulaciones), `informe_datos_finales.txt`.
+`C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\pruebas\final-mod\`: `tamanos_*.png` (los 5 tamaños por estado, a partir de los datos finales), `simulacion_banda.png` y `simulacion_panel.png` (simulaciones), `informe_datos_finales.txt`.
 '''
 open(ruta, "w", encoding="utf-8").write(texto.rstrip("\n") + "\n" + anexo)
 print("anexo añadido:", len(anexo), "caracteres")

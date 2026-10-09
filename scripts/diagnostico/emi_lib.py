@@ -4,7 +4,7 @@ import numpy as np
 import collections
 from collections import deque
 
-SRC = r"C:\Users\Admin0011\Downloads\animacion de Emilia pixel de estados.png"
+SRC = r"C:\Users\Admin0011\Proyectos\mods-claude\emilia-mascota\arte\animacion de Emilia pixel de estados.png"
 A = np.array(Image.open(SRC).convert("RGB")).astype(int)
 NAMES = ["nueva", "pensando", "responde", "leyendo", "escribiendo", "necesita", "falla", "para", "terminado", "baile", "hula", "duerme"]
 COLS = [(15, 473), (490, 955), (975, 1435)]
