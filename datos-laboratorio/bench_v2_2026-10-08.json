@@ -1,0 +1,61 @@
+{
+  "fecha": "2026-10-09T02:03:23.025Z",
+  "resultados": [
+    {
+      "fase": "A control: redibujar cada 250 ms (como el mod actual)",
+      "segundos": 12,
+      "rendersTrasBlit": 0,
+      "ticks": 47,
+      "renders": 49,
+      "renderMs": 45,
+      "renderBytes": 940800,
+      "blits": 0,
+      "blitMs": 0,
+      "blitBytes": 0,
+      "saltados": 0,
+      "denegados": 0
+    },
+    {
+      "fase": "D redibujar cada 125 ms con fotogramas por tiempo (8 fps, sin blit)",
+      "segundos": 12,
+      "rendersTrasBlit": 0,
+      "ticks": 94,
+      "renders": 94,
+      "renderMs": 41,
+      "renderBytes": 1804800,
+      "blits": 0,
+      "blitMs": 0,
+      "blitBytes": 0,
+      "saltados": 0,
+      "denegados": 0
+    },
+    {
+      "fase": "B blit, 4 fotogramas por segundo en los estados vivos",
+      "segundos": 12,
+      "rendersTrasBlit": 0,
+      "ticks": 47,
+      "renders": 2,
+      "renderMs": 0,
+      "renderBytes": 38400,
+      "blits": 47,
+      "blitMs": 94,
+      "blitBytes": 902400,
+      "saltados": 0,
+      "denegados": 0
+    },
+    {
+      "fase": "C blit, 8 fotogramas por segundo en los estados vivos",
+      "segundos": 12,
+      "rendersTrasBlit": 0,
+      "ticks": 94,
+      "renders": 1,
+      "renderMs": 1,
+      "renderBytes": 19200,
+      "blits": 94,
+      "blitMs": 211,
+      "blitBytes": 1804800,
+      "saltados": 0,
+      "denegados": 0
+    }
+  ]
+}

@@ -215,3 +215,26 @@ Lectura **[HECHO]**:
 - **No integrar `blit`**: en la medición real no redujo las pasadas de dibujo y cada envío cuesta más que una pasada.
 - **4 fps frente a 8 fps:** entre las dos variantes con `blit`, C entrega el doble de fotogramas con menos tiempo total en hooks que B (615 frente a 1 055 ms), pero ambas son peores que el control. **Mi recomendación es mantener el ritmo actual (4 fps, redibujo normal).**
 - **Si quieres más fluidez**, la opción a probar es **8 fps con el redibujo normal** (tick de 125 ms y fotograma elegido por tiempo, sin `blit`): una pasada del control cuesta ~0,8 ms, así que 8 por segundo serían ~6 ms/s. **Está medido solo en simulación**; la segunda medición real (fase D) lo confirma. Para valorar el aspecto: `/emiproto atomo8` frente a `/emiproto atomo`.
+
+
+---
+
+## 11. Segunda medición real (bench v2) y CORRECCIÓN de la sección 10
+
+Datos: `bench_v2_2026-10-08.json`. Mismas condiciones (12 s por fase, panel acoplado, sprite 40×60) más la fase D.
+
+| Fase | Pasadas de dibujo | Tiempo en dibujo/envío | Bytes |
+|---|---|---|---|
+| A control, 250 ms (como el mod) | 49 | 45 ms | 941 KB |
+| D redibujo a 8 fps, sin blit | 94 | 41 ms | 1 805 KB |
+| B blit 4 fps | **2** (47 envíos) | 94 ms (~2 ms/envío) | 902 KB |
+| C blit 8 fps | **1** (94 envíos) | 211 ms (~2,2 ms/envío) | 1 805 KB |
+
+**Corrección [HECHO]:** la sección 10 afirmaba que `blit` no reducía las pasadas de dibujo. Esta segunda medición lo **desmiente**: con `blit` el dibujo casi desaparece (2 y 1 pasadas) y `rendersTrasBlit` = 0. La primera medición quedó contaminada por algo que redibujaba el panel en aquel momento (no identificado; **[HIPÓTESIS]** actividad de la sesión). No hay que fiarse de la primera.
+
+Lo que sí se mantiene:
+- Dentro de nuestros hooks `blit` cuesta **más** (94 y 211 ms frente a 45 y 41 ms). Pero el trabajo que el motor hace al redibujar fuera de nuestros hooks **no está medido**, así que el ahorro real de CPU del motor sigue sin conocerse. **[LÍMITE]** Es reloj de pared.
+- Los bytes enviados son los mismos (cada fotograma lleva todas las celdas).
+- **D (8 fps con redibujo normal) cuesta lo mismo que el control (41 frente a 45 ms) y duplica los fotogramas.** Es la opción más barata para más fluidez.
+
+**Recomendación revisada:** mantener el redibujo normal. Entre 4 y 8 fps: 8 fps sin `blit` (fase D) si quieres más fluidez, sin coste extra medido en los hooks; el aspecto lo decides tú con `/emiproto atomo8`. `blit` solo merecería la pena si se demuestra un ahorro de CPU del motor, que aquí no se midió. Nada de esto está integrado.
