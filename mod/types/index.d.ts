@@ -20,7 +20,8 @@ export type MascotaTamano = 'grande' | 'normal' | 'mini' | 'compacta' | 'oculta'
 // `modo`: dónde vive Emi, la banda sobre el cuadro de texto o un panel acoplado junto a la conversación.
 export type MascotaModo = 'banda' | 'panel'
 
-export type MascotaAjustes = { tamano: MascotaTamano; sonido: boolean; avisos: boolean; modo: MascotaModo }
+// `escritorio`: si Emi flota también sobre el escritorio (programa aparte, escritorio\emi_escritorio.pyw) mientras haya una conversación abierta.
+export type MascotaAjustes = { tamano: MascotaTamano; sonido: boolean; avisos: boolean; modo: MascotaModo; escritorio: boolean }
 
 declare module 'claude-code' {
   interface PluginState {

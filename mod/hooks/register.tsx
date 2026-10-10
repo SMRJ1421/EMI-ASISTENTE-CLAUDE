@@ -3,7 +3,8 @@ import type { EngineInterface, Register, RenderElement, Timer } from 'claude-cod
 
 import type { MascotaAjustes, MascotaAnimo, MascotaEstado, MascotaTamano } from '../types'
 import { esFalloReal, esRechazo } from './deteccion'
-import { celdas, dibujoSvg, elegirTam, fotograma, medidas, planPanel, TEXTO_COLUMNAS } from './dibujo'
+import { ESPECIAL } from './animaciones'
+import { celdas, dibujoSvg, elegirTam, especialEnBanda, especialQueCabe, fotograma, fotogramaEn, medidas, planPanel, TEXTO_COLUMNAS, TEXTO_FILAS } from './dibujo'
 import type { Tam } from './sprites'
 import { CARAS, COLORES, DURACION, ESTADOS, NOMBRE, SIESTA, cortar, detalleDe, estadoDeHerramienta, frase } from './estados'
 
@@ -20,7 +21,7 @@ const AVISO_DESDE = 30000
 const ENTRE_AVISOS = 60000
 
 const INICIAL: MascotaAnimo = { estado: 'hula', desde: 0, hasta: 0, detalle: '' }
-const AJUSTES: MascotaAjustes = { tamano: 'normal', sonido: true, avisos: true, modo: 'banda' }
+const AJUSTES: MascotaAjustes = { tamano: 'normal', sonido: true, avisos: true, modo: 'banda', escritorio: true }
 const PANEL = 'emi'
 
 const animo = atom({ plugin: 'mascota', key: 'animo' } as const, INICIAL)
@@ -34,6 +35,9 @@ let trabajando = false
 let inicioTurno = 0
 let herramientas = 0
 let actual: MascotaEstado = 'hula'
+let desdeActual = 0
+// El programa de escritorio (escritorio\emi_escritorio.pyw) vive en el proyecto; si no existe en esta ruta, el mod sigue sin él.
+let rutaEscritorio = ''
 let enDemo = false
 let ultimoAviso = 0
 let carpeta = ''
@@ -55,7 +59,35 @@ async function fijar($: $, estado: MascotaEstado, detalle = '', desdeDemo = fals
   const ahora = Date.now()
   const dura = DURACION[estado]
   actual = estado
+  desdeActual = ahora
   await update($, animo, () => ({ estado, desde: ahora, hasta: dura ? ahora + dura : 0, detalle })).catch(() => undefined)
+  await ajustarRapido($)
+  // El programa de escritorio lee el estado del archivo de la sesión: se publica en cada cambio.
+  await publicar($)
+}
+
+// Un estado con animación propia (pensando: 5 fps) pide más tics que el latido de 250 ms, pero solo mientras dura ese estado:
+// el resto del tiempo no corre nada extra (se ve en la banda y en el panel, en terminal y escritorio).
+let rapido: Timer | undefined
+let rapidoDe = ''
+async function ajustarRapido($: $) {
+  const e = ESPECIAL[actual]
+  // A 4 fps o menos basta el latido de 250 ms: no hace falta un reloj extra.
+  if (!e || e.fps <= 4) {
+    rapido?.cancel()
+    rapido = undefined
+    rapidoDe = ''
+    return
+  }
+  if (rapido && rapidoDe === actual) {
+    return
+  }
+  rapido?.cancel()
+  rapidoDe = actual
+  // Dos tics por fotograma (mínimo 50 ms): el fotograma sale del reloj, el tic solo fija cuánto tarda en verse el cambio.
+  rapido = $.clock.every(Math.max(50, Math.round(500 / e.fps)), () => {
+    void update($, tic, n => n + 1).catch(() => undefined)
+  })
 }
 
 // ---------- Avisos fuera de la pantalla (Windows) ----------
@@ -81,12 +113,13 @@ function guionAviso(tipo: 'listo' | 'necesita', sonido: boolean, aviso: boolean)
   return partes.join(';')
 }
 
-async function avisar($: $, tipo: 'listo' | 'necesita') {
+// `globo`: si además del sonido va el aviso de Windows (el sonido suena siempre que está activado; el globo, solo en encargos largos).
+async function avisar($: $, tipo: 'listo' | 'necesita', globo = true) {
   const a = await read($, ajustes)
-  if (!esWindows || (!a.sonido && !a.avisos)) {
+  if (!esWindows || (!a.sonido && !(a.avisos && globo))) {
     return
   }
-  const guion = guionAviso(tipo, a.sonido, a.avisos)
+  const guion = guionAviso(tipo, a.sonido, a.avisos && globo)
   void $.process
     .run(['powershell', '-NoProfile', '-NonInteractive', '-Command', guion], { timeoutMs: 20000 })
     .catch(() => undefined)
@@ -98,8 +131,23 @@ async function publicar($: $, cerrada = false) {
   if (!carpeta || !idSesion) {
     return
   }
-  const datos = { id: idSesion, trabajando, vivo: Date.now(), cerrada }
+  const datos = { id: idSesion, trabajando, vivo: Date.now(), cerrada, estado: actual, desde: desdeActual }
   await $.fs.write(`${carpeta}/sesiones/${idSesion}.json`, JSON.stringify(datos)).catch(() => undefined)
+}
+
+// Abre Emi en el escritorio (Windows): un programa aparte que se cierra solo cuando ya no queda ninguna conversación. Una sola instancia:
+// si ya hay una, la nueva se va sola. El archivo escritorio.txt es el interruptor que lee el programa («off» lo cierra).
+async function lanzarEscritorio($: $) {
+  if (!esWindows || !carpeta || !rutaEscritorio) {
+    return
+  }
+  const a = await read($, ajustes)
+  await $.fs.write(`${carpeta}/escritorio.txt`, a.escritorio ? 'on' : 'off').catch(() => undefined)
+  if (!a.escritorio) {
+    return
+  }
+  const guion = `$p='${rutaEscritorio}';if(Test-Path $p){Start-Process pythonw -ArgumentList ('"'+$p+'"') -WindowStyle Hidden}`
+  void $.process.run(['powershell', '-NoProfile', '-NonInteractive', '-Command', guion], { timeoutMs: 20000 }).catch(() => undefined)
 }
 
 async function contarOtras($: $) {
@@ -184,8 +232,11 @@ async function abrirPanel($: $): Promise<string> {
   const columnasEst = Math.max(40, Math.floor((vista.columnas || 156) * 0.45))
   const plan = planPanel(filasEst, columnasEst, topeDe(a.tamano))
   const m = plan ? medidas(plan.tam) : null
-  const columns = m ? m.ancho + (plan?.texto === 'lado' ? TEXTO_COLUMNAS : 0) + 2 : 40
-  const rows = m ? m.filas + 4 : 10
+  // Con tamaño normal o grande, si el terminal da sitio, el panel se abre lo bastante ancho y alto para la animación de 60x60 de «pensando».
+  const esp = Object.values(ESPECIAL).map(e => medidas(e.tam)).reduce((x, y) => ({ ancho: Math.max(x.ancho, y.ancho), filas: Math.max(x.filas, y.filas) }), { ancho: 0, filas: 0 })
+  const cabeEsp = (a.tamano === 'normal' || a.tamano === 'grande') && columnasEst >= esp.ancho + 2 && filasEst >= esp.filas + TEXTO_FILAS
+  const columns = Math.max(m ? m.ancho + (plan?.texto === 'lado' ? TEXTO_COLUMNAS : 0) + 2 : 40, cabeEsp ? esp.ancho + 2 : 0)
+  const rows = Math.max(m ? m.filas + 4 : 10, cabeEsp ? esp.filas + TEXTO_FILAS : 0)
   const r = await $.ui.open({ id: PANEL, title: NOMBRE, columns, rows }).catch((error: unknown) => ({ isPlaced: false as const, reason: String(error) }))
   if (!r.isPlaced) {
     await $.ui.close({ id: PANEL }).catch(() => undefined)
@@ -193,6 +244,7 @@ async function abrirPanel($: $): Promise<string> {
     return r.reason
   }
   await update($, panel, () => true).catch(() => undefined)
+  await ajustarRapido($)
   return ''
 }
 
@@ -200,6 +252,7 @@ async function aBanda($: $) {
   await guardarAjustes($, { modo: 'banda' })
   await update($, panel, () => false).catch(() => undefined)
   await $.ui.close({ id: PANEL }).catch(() => undefined)
+  await ajustarRapido($)
 }
 
 // ---------- Cómo se ve ----------
@@ -224,6 +277,7 @@ export const register: Register = on => {
     const hecho = await next(e)
     const casa = (await $.env.get('HOME').catch(() => undefined)) ?? (await $.env.get('USERPROFILE').catch(() => undefined))
     carpeta = casa ? `${casa}/.claude/mascota` : ''
+    rutaEscritorio = casa ? `${casa}/Proyectos/mods-claude/emilia-mascota/escritorio/emi_escritorio.pyw` : ''
     idSesion = await $.session.id().catch(() => '')
     esWindows = (await $.env.get('OS').catch(() => undefined)) === 'Windows_NT'
 
@@ -234,13 +288,14 @@ export const register: Register = on => {
         sonido: typeof guardado.sonido === 'boolean' ? guardado.sonido : a.sonido,
         avisos: typeof guardado.avisos === 'boolean' ? guardado.avisos : a.avisos,
         modo: guardado.modo === 'panel' || guardado.modo === 'banda' ? guardado.modo : a.modo,
+        escritorio: typeof guardado.escritorio === 'boolean' ? guardado.escritorio : a.escritorio,
       }))
     }
 
     await $.command.register({
       name: 'emi',
-      description: 'Emi, la mascota: /emi grande | normal | mini | compacta | oculta | panel | banda | sonido | silencio | avisos | sin-avisos | probar',
-      argumentHint: '[grande | normal | mini | compacta | oculta | panel | banda | sonido | silencio | avisos | sin-avisos | probar]',
+      description: 'Emi, la mascota: /emi grande | normal | mini | compacta | oculta | panel | banda | sonido | silencio | avisos | sin-avisos | escritorio | sin-escritorio | probar',
+      argumentHint: '[grande | normal | mini | compacta | oculta | panel | banda | sonido | silencio | avisos | sin-avisos | escritorio | sin-escritorio | probar]',
       immediate: true,
     })
 
@@ -253,6 +308,7 @@ export const register: Register = on => {
       void latir($)
     })
     await publicar($)
+    await lanzarEscritorio($)
     await contarOtras($)
     // Una recarga cierra el panel sin avisar: se parte de «sin panel» y, si ese es el modo guardado, se reabre.
     await update($, panel, () => false).catch(() => undefined)
@@ -360,10 +416,12 @@ export const register: Register = on => {
       if (e.reason === 'answer') {
         const largo = duro >= LARGO || herramientas >= 25
         await fijar($, largo ? 'baile' : 'terminado', `${Math.max(1, Math.round(duro / 1000))} s · ${herramientas} herramientas`)
-        if (duro >= AVISO_DESDE) {
+        // Cada vez que Claude termina suena el pitido de «listo»; el globo de Windows solo si el encargo fue largo.
+        const globo = duro >= AVISO_DESDE
+        if (globo) {
           ultimoAviso = Date.now()
-          void avisar($, 'listo')
         }
+        void avisar($, 'listo', globo)
       } else if (e.reason === 'aborted') {
         await fijar($, 'hula')
       } else {
@@ -390,6 +448,16 @@ export const register: Register = on => {
       await guardar({ avisos: orden === 'avisos' })
       return { text: orden === 'avisos' ? 'Aviso de Windows cuando termina un encargo largo o te necesita: activado.' : 'Sin avisos de Windows.' }
     }
+    if (orden === 'escritorio' || orden === 'sin-escritorio') {
+      await guardar({ escritorio: orden === 'escritorio' })
+      await lanzarEscritorio($)
+      return {
+        text:
+          orden === 'escritorio'
+            ? 'Emi también flota sobre el escritorio, aunque minimices Claude, mientras haya una conversación abierta. Arrástrala para moverla; clic derecho para el tamaño o para cerrarla.'
+            : 'Emi ya no flota sobre el escritorio.',
+      }
+    }
     if (orden === 'panel') {
       const motivo = await abrirPanel($)
       if (motivo) {
@@ -408,8 +476,8 @@ export const register: Register = on => {
     }
     return {
       text:
-        `${NOMBRE} · tamaño ${a.tamano} · ${a.modo === 'panel' ? 'panel acoplado' : 'banda'} · sonido ${a.sonido ? 'sí' : 'no'} · avisos ${a.avisos ? 'sí' : 'no'}${esWindows ? '' : ' (sonido y avisos solo en Windows)'}\n` +
-        'Uso: /emi grande | normal | mini | compacta | oculta · /emi panel | banda · /emi sonido | silencio · /emi avisos | sin-avisos · /emi probar',
+        `${NOMBRE} · tamaño ${a.tamano} · ${a.modo === 'panel' ? 'panel acoplado' : 'banda'} · sonido ${a.sonido ? 'sí' : 'no'} · avisos ${a.avisos ? 'sí' : 'no'} · escritorio ${a.escritorio ? 'sí' : 'no'}${esWindows ? '' : ' (sonido y avisos solo en Windows)'}\n` +
+        'Uso: /emi grande | normal | mini | compacta | oculta · /emi panel | banda · /emi sonido | silencio · /emi avisos | sin-avisos · /emi escritorio | sin-escritorio · /emi probar',
     }
   })
 
@@ -418,6 +486,7 @@ export const register: Register = on => {
   on('ui.close', async ($, e, next) => {
     if (e.id === PANEL) {
       await update($, panel, () => false).catch(() => undefined)
+      await ajustarRapido($)
       if (e.origin.kind === 'person') {
         await guardarAjustes($, { modo: 'banda' }).catch(() => undefined)
       }
@@ -448,8 +517,10 @@ export const register: Register = on => {
     // En el terminal, el mayor sprite que cabe en las filas que concede el motor; si no cabe ninguno, la línea compacta.
     const tope = topeDe(aj.tamano)
     const tam = e.surface === 'terminal' ? elegirTam(e.props.maxRows - 1, e.props.bodyColumns - TEXTO_COLUMNAS, tope) : null
+    // «pensando» tiene su animación también en la banda del terminal, a 60x60 si la banda es alta y si no en una versión de 28x28 (cabe en las 14 filas).
+    const chico = e.surface === 'terminal' && (aj.tamano === 'normal' || aj.tamano === 'grande') ? especialEnBanda(a.estado, e.props.maxRows - 1, e.props.bodyColumns) : null
 
-    if (aj.tamano === 'compacta' || (e.surface === 'terminal' && !tam)) {
+    if (aj.tamano === 'compacta' || (e.surface === 'terminal' && !tam && !chico)) {
       const { Box, Button, Text } = $.ui.resolve(e)
       const puntos = a.estado === 'pensando' || a.estado === 'responde' ? '.'.repeat(1 + (n % 3)) : ''
       const linea = (
@@ -476,10 +547,10 @@ export const register: Register = on => {
       )
     }
 
-    if (e.surface === 'terminal' && tam) {
+    if (e.surface === 'terminal' && (tam || chico)) {
       const { Box, Button, Raster, Text } = $.ui.resolve(e)
-      const c = celdas(tam, fotograma(a.estado, tam, n))
-      const reducido = tam !== tope && aj.tamano !== 'mini'
+      const c = chico ? celdas(chico, fotogramaEn(a.estado, chico, ahora - a.desde)) : celdas(tam!, fotograma(a.estado, tam!, n))
+      const reducido = (chico ? chico !== ESPECIAL[a.estado]?.tam : tam !== tope) && aj.tamano !== 'mini'
       const lineas = reducido ? [...extra, 'más grande: /emi panel'] : extra
       const banda = (
         <Box flexDirection="row" gap={1}>
@@ -518,7 +589,9 @@ export const register: Register = on => {
     // La app de escritorio, el editor y el móvil dibujan un SVG (sin Raster): escala entera, sin límite de filas de terminal.
     const { Box, Button, Svg, Text } = $.ui.resolve(e)
     const tamSvg: Tam = aj.tamano === 'grande' ? 'XL' : aj.tamano === 'mini' ? 'N' : 'L'
-    const d = dibujoSvg(tamSvg, fotograma(a.estado, tamSvg, n))
+    // «pensando»: su animación de 5 fotogramas a 5 fps (60x60), también en la banda: un SVG se escala y no tiene el límite de filas del terminal.
+    const especial = aj.tamano === 'normal' || aj.tamano === 'grande' ? (ESPECIAL[a.estado]?.tam ?? null) : null
+    const d = especial ? dibujoSvg(especial, fotogramaEn(a.estado, especial, ahora - a.desde)) : dibujoSvg(tamSvg, fotograma(a.estado, tamSvg, n))
     const escala = 2
     const banda = (
       <Box flexDirection="row" gap={1}>
@@ -577,8 +650,10 @@ export const register: Register = on => {
           </Box>
         )
       }
-      const m = medidas(plan.tam)
-      const c = celdas(plan.tam, fotograma(a.estado, plan.tam, n))
+      // «pensando» tiene su animación de 5 fotogramas a 5 fps (60x60): solo en el panel, con tamaño normal o grande y si cabe con el texto debajo.
+      const especial = aj.tamano === 'normal' || aj.tamano === 'grande' ? especialQueCabe(a.estado, filas, columnas) : null
+      const m = medidas(especial ?? plan.tam)
+      const c = especial ? celdas(especial, fotogramaEn(a.estado, especial, ahora - a.desde)) : celdas(plan.tam, fotograma(a.estado, plan.tam, n))
       const texto = (
         <Box flexDirection="column">
           <Text color={LILA} bold wrap="truncate-end">
@@ -593,7 +668,7 @@ export const register: Register = on => {
           <Button key="emi-volver" label="volver a la banda" onPress={volver} />
         </Box>
       )
-      return plan.texto === 'abajo' ? (
+      return especial || plan.texto === 'abajo' ? (
         <Box flexDirection="column">
           <Raster key="emi-panel" columns={c.columnas} rows={c.filas} cells={c.cells} />
           {texto}
@@ -608,7 +683,9 @@ export const register: Register = on => {
 
     const { Box, Button, Svg, Text } = $.ui.resolve(e)
     const tamSvg: Tam = aj.tamano === 'grande' ? 'XL' : aj.tamano === 'mini' ? 'N' : 'L'
-    const d = dibujoSvg(tamSvg, fotograma(a.estado, tamSvg, n))
+    // «pensando»: su animación de 5 fotogramas a 5 fps (60x60); un SVG se escala, así que siempre cabe.
+    const especial = aj.tamano === 'normal' || aj.tamano === 'grande' ? (ESPECIAL[a.estado]?.tam ?? null) : null
+    const d = especial ? dibujoSvg(especial, fotogramaEn(a.estado, especial, ahora - a.desde)) : dibujoSvg(tamSvg, fotograma(a.estado, tamSvg, n))
     return (
       <Box flexDirection="column">
         <Svg source={d.source} alt={`${NOMBRE}: ${a.estado}`} width={d.ancho * 2} height={d.alto * 2} />

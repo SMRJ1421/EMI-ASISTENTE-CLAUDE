@@ -1,0 +1,230 @@
+{
+  "estado": "hula",
+  "archivos": [
+    "animacion-emi-de-guardia-hula-frame-01.png",
+    "animacion-emi-de-guardia-hula-frame-02.png",
+    "animacion-emi-de-guardia-hula-frame-03.png",
+    "animacion-emi-de-guardia-hula-frame-04.png",
+    "animacion-emi-de-guardia-hula-frame-05.png"
+  ],
+  "transparencia": {
+    "alfa_distintos": 256,
+    "alfa_min_max": [
+      0,
+      255
+    ],
+    "pixeles_con_alfa_parcial": [
+      391372,
+      387537,
+      395840,
+      394291,
+      404112
+    ],
+    "opaco_por_ciento": [
+      25.0,
+      24.7,
+      25.2,
+      25.2,
+      25.8
+    ],
+    "esquinas_transparentes": false
+  },
+  "diferencias_con_el_anterior": [
+    406312,
+    406032,
+    401994,
+    412858
+  ],
+  "fotogramas_identicos": 0,
+  "motas_eliminadas_por_fotograma": [
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "alineacion_contra_fotograma_1": [
+    {
+      "s": 1.0,
+      "ox": 0.0,
+      "oy": 0.0,
+      "iou": 1.0,
+      "iou_sin_ajustar": 1.0
+    },
+    {
+      "s": 0.995,
+      "ox": 0,
+      "oy": 3,
+      "iou": 0.9223,
+      "iou_sin_ajustar": 0.9211
+    },
+    {
+      "s": 1.0,
+      "ox": -3,
+      "oy": 0,
+      "iou": 0.9644,
+      "iou_sin_ajustar": 0.9642
+    },
+    {
+      "s": 0.995,
+      "ox": 3,
+      "oy": 3,
+      "iou": 0.9769,
+      "iou_sin_ajustar": 0.9764
+    },
+    {
+      "s": 0.985,
+      "ox": 9,
+      "oy": 6,
+      "iou": 0.9434,
+      "iou_sin_ajustar": 0.9388
+    }
+  ],
+  "rejilla_nativa_px_del_PNG": {
+    "ancho_de_celda": 18.5,
+    "alto_de_celda": 18.45,
+    "celdas": [
+      67.8,
+      68.0
+    ]
+  },
+  "caja_del_cuerpo_en_el_PNG": {
+    "x": [
+      337,
+      970
+    ],
+    "y": [
+      257,
+      1152
+    ]
+  },
+  "variantes": {
+    "nn30": {
+      "nota": "PNG completo a 30x30, vecino más cercano",
+      "tam": "30x30",
+      "colores_exactos": 1012,
+      "colores_en_paleta": 88,
+      "error_de_color_rgb": 18.86,
+      "caja_de_emi_px": [
+        15,
+        22
+      ],
+      "margen_px": {
+        "izq": 8,
+        "der": 7,
+        "arriba": 6,
+        "abajo": 2
+      },
+      "pixeles_opacos_fotograma1": 220,
+      "pixeles_de_contorno_negro_f1": 35,
+      "celdas_de_terminal": "30 columnas x 15 filas"
+    },
+    "nn40": {
+      "nota": "PNG completo a 40x40, vecino más cercano",
+      "tam": "40x40",
+      "colores_exactos": 1714,
+      "colores_en_paleta": 88,
+      "error_de_color_rgb": 19.49,
+      "caja_de_emi_px": [
+        20,
+        29
+      ],
+      "margen_px": {
+        "izq": 11,
+        "der": 9,
+        "arriba": 8,
+        "abajo": 3
+      },
+      "pixeles_opacos_fotograma1": 391,
+      "pixeles_de_contorno_negro_f1": 66,
+      "celdas_de_terminal": "40 columnas x 20 filas"
+    },
+    "nn48": {
+      "nota": "PNG completo a 48x48, vecino más cercano",
+      "tam": "48x48",
+      "colores_exactos": 2360,
+      "colores_en_paleta": 88,
+      "error_de_color_rgb": 18.04,
+      "caja_de_emi_px": [
+        24,
+        34
+      ],
+      "margen_px": {
+        "izq": 13,
+        "der": 11,
+        "arriba": 10,
+        "abajo": 4
+      },
+      "pixeles_opacos_fotograma1": 554,
+      "pixeles_de_contorno_negro_f1": 89,
+      "celdas_de_terminal": "48 columnas x 24 filas"
+    },
+    "nn60": {
+      "nota": "PNG completo a 60x60, vecino más cercano",
+      "tam": "60x60",
+      "colores_exactos": 3484,
+      "colores_en_paleta": 88,
+      "error_de_color_rgb": 18.04,
+      "caja_de_emi_px": [
+        30,
+        43
+      ],
+      "margen_px": {
+        "izq": 16,
+        "der": 14,
+        "arriba": 12,
+        "abajo": 5
+      },
+      "pixeles_opacos_fotograma1": 872,
+      "pixeles_de_contorno_negro_f1": 150,
+      "celdas_de_terminal": "60 columnas x 30 filas"
+    },
+    "nat60": {
+      "nota": "ventana de 60x60 celdas nativas del arte, centrada en Emi, pies a 4 celdas del borde",
+      "tam": "60x60",
+      "colores_exactos": 4390,
+      "colores_en_paleta": 88,
+      "error_de_color_rgb": 18.16,
+      "caja_de_emi_px": [
+        34,
+        48
+      ],
+      "margen_px": {
+        "izq": 13,
+        "der": 13,
+        "arriba": 8,
+        "abajo": 4
+      },
+      "pixeles_opacos_fotograma1": 1109,
+      "pixeles_de_contorno_negro_f1": 189,
+      "celdas_de_terminal": "60 columnas x 30 filas"
+    },
+    "nat28": {
+      "nota": "ventana de 56x56 celdas nativas reducida a 28x28 (media de 2x2 celdas), pies a 2 px del borde",
+      "tam": "28x28",
+      "colores_exactos": 1401,
+      "colores_en_paleta": 88,
+      "error_de_color_rgb": 23.19,
+      "caja_de_emi_px": [
+        18,
+        24
+      ],
+      "margen_px": {
+        "izq": 5,
+        "der": 5,
+        "arriba": 2,
+        "abajo": 2
+      },
+      "pixeles_opacos_fotograma1": 288,
+      "pixeles_de_contorno_negro_f1": 20,
+      "celdas_de_terminal": "28 columnas x 14 filas"
+    }
+  },
+  "movimiento_nat60_pixeles_distintos_entre_fotogramas": [
+    951,
+    947,
+    845,
+    979,
+    911
+  ]
+}

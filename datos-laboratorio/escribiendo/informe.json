@@ -1,0 +1,20 @@
+{
+  "archivos": [
+    "animacion-emi-escribiendo-comandos-frame-01.png",
+    "animacion-emi-escribiendo-comandos-frame-02.png",
+    "animacion-emi-escribiendo-comandos-frame-03.png",
+    "animacion-emi-escribiendo-comandos-frame-04.png",
+    "animacion-emi-escribiendo-comandos-frame-05.png"
+  ],
+  "fotogramas_identicos": 0,
+  "nat60": {
+    "colores_exactos": 5419,
+    "colores_en_paleta": 88,
+    "error_de_color_rgb": 17.1
+  },
+  "nat28": {
+    "colores_exactos": 1585,
+    "colores_en_paleta": 88,
+    "error_de_color_rgb": 20.42
+  }
+}

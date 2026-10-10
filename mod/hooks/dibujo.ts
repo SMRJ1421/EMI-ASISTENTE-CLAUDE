@@ -1,5 +1,14 @@
+import { ANIM, ESPECIAL } from './animaciones'
+import type { TamAnim } from './animaciones'
 import { ALFABETO, MARCA, TAMANOS } from './sprites'
-import type { Tam } from './sprites'
+import type { Hoja, Tam } from './sprites'
+
+// Los cinco tamaños de siempre más las hojas de los estados con animación propia (pensando, hula): solo se eligen a propósito, nunca por espacio.
+export type TamX = Tam | TamAnim
+const esAnim = (tam: TamX): tam is TamAnim => tam in ANIM
+// ¿Esta hoja posa sobre la tarjeta lila? Sí si su arte lleva contorno negro (hula); no si no lo lleva (pensando): deja ver el fondo.
+const sobreTarjeta = (tam: TamX) => !esAnim(tam) || Object.values(ESPECIAL).some(e => (e.tam === tam || e.chico === tam) && e.tarjeta)
+const hoja = (tam: TamX): Hoja => (esAnim(tam) ? ANIM[tam] : TAMANOS[tam])
 
 // Poses, fotogramas, elección del tamaño según el espacio y conversión a celdas Raster o a SVG: funciones puras, sin `$`.
 
@@ -27,8 +36,8 @@ function recordar<T>(clave: string, crear: () => T): T {
 
 // ---------- Datos ----------
 
-export function medidas(tam: Tam) {
-  const d = TAMANOS[tam]
+export function medidas(tam: TamX) {
+  const d = hoja(tam)
   return { ancho: d.ancho, alto: d.alto, filas: d.alto / 2 }
 }
 
@@ -48,12 +57,12 @@ export function descomprimir(texto: string): string {
   return salida
 }
 
-export function fotogramas(estado: string, tam: Tam): readonly string[] {
-  const d = TAMANOS[tam]
+export function fotogramas(estado: string, tam: TamX): readonly string[] {
+  const d = hoja(tam)
   return d.estados[estado] ?? d.estados['hula'] ?? []
 }
 
-export function filasDe(estado: string, tam: Tam, indiceFotograma: number): string[] {
+export function filasDe(estado: string, tam: TamX, indiceFotograma: number): string[] {
   const lista = fotogramas(estado, tam)
   const i = lista.length ? ((indiceFotograma % lista.length) + lista.length) % lista.length : 0
   return recordar(`f:${estado}:${tam}:${i}`, () => (lista[i] ?? '').split('/').map(descomprimir))
@@ -69,6 +78,34 @@ export function indice(estado: string, tic: number, cuantos: number): number {
 
 export function fotograma(estado: string, tam: Tam, tic: number): string[] {
   return filasDe(estado, tam, indice(estado, tic, fotogramas(estado, tam).length))
+}
+
+// ---------- Estados con su propia animación (más fotogramas, más fps, 60x60) ----------
+
+// Un fotograma de la hoja especial del estado según los milisegundos desde que empezó (fps fijos, no cuenta redibujos).
+export function fotogramaEn(estado: string, tam: TamAnim, ms: number): string[] {
+  const cuantos = fotogramas(estado, tam).length
+  const fps = ESPECIAL[estado]?.fps ?? 4
+  return filasDe(estado, tam, cuantos <= 1 ? 0 : Math.floor((Math.max(0, ms) * fps) / 1000) % cuantos)
+}
+
+// La hoja especial del estado para la banda del terminal: la de 60x60 si cabe (banda alta) y si no la de 28x28 (14 filas), con el texto al lado.
+export function especialEnBanda(estado: string, filas: number, columnas: number): TamAnim | null {
+  const e = ESPECIAL[estado]
+  if (!e) {
+    return null
+  }
+  return [e.tam, e.chico].find(t => medidas(t).filas <= filas && medidas(t).ancho + TEXTO_COLUMNAS <= columnas) ?? null
+}
+
+// La hoja especial del estado, si la tiene y cabe en `filas` x `columnas` con el texto debajo (si no, null y se usa el sprite de siempre).
+export function especialQueCabe(estado: string, filas: number, columnas: number): TamAnim | null {
+  const e = ESPECIAL[estado]
+  if (!e) {
+    return null
+  }
+  const m = medidas(e.tam)
+  return m.ancho <= columnas && m.filas + TEXTO_FILAS <= filas ? e.tam : null
 }
 
 // ---------- Elegir el tamaño que cabe ----------
@@ -110,13 +147,13 @@ export function planPanel(filas: number, columnas: number, tope: Tam = 'XL'): Pl
 
 // ---------- Pintar ----------
 
-const color = (tam: Tam, c: string) => {
+const color = (tam: TamX, c: string) => {
   const i = ALFABETO.indexOf(c)
-  const hex = i >= 0 ? TAMANOS[tam].paleta[i] : undefined
+  const hex = i >= 0 ? hoja(tam).paleta[i] : undefined
   return hex ? parseInt(hex.slice(1), 16) : TARJETA
 }
 
-export const colorDe = (tam: Tam, c: string) => color(tam, c)
+export const colorDe = (tam: TamX, c: string) => color(tam, c)
 
 const SIN_COLOR = 0x01000000
 
@@ -124,11 +161,13 @@ export type Celdas = { columnas: number; filas: number; cells: string; glifos: n
 
 // Para el terminal: dos píxeles por celda sobre la tarjeta. Si las dos mitades tienen el mismo color no hace falta el glifo «▀»:
 // basta un espacio con ese color de fondo (técnica vista en dgokcin/claude-pokemon-mod, reimplementada aquí). La imagen es idéntica.
-export function celdas(tam: Tam, filas: readonly string[]): Celdas {
+export function celdas(tam: TamX, filas: readonly string[]): Celdas {
   return recordar(`c:${tam}:${filas.join('/')}`, () => {
     const ancho = filas[0]?.length ?? 0
     const pares = Math.ceil(filas.length / 2)
     const palabras = new Uint32Array(ancho * pares * 3)
+    // Los sprites de siempre posan sobre la tarjeta lila (llevan contorno negro); la hoja de «pensando» (sin contorno) deja ver el fondo del terminal.
+    const vacio = sobreTarjeta(tam) ? TARJETA : SIN_COLOR
     let k = 0
     let glifos = 0
     for (let r = 0; r < pares; r += 1) {
@@ -137,12 +176,18 @@ export function celdas(tam: Tam, filas: readonly string[]): Celdas {
       for (let x = 0; x < ancho; x += 1) {
         const a = arriba[x] ?? '.'
         const b = abajo[x] ?? '.'
-        const ca = a === '.' ? TARJETA : color(tam, a)
-        const cb = b === '.' ? TARJETA : color(tam, b)
+        const ca = a === '.' ? vacio : color(tam, a)
+        const cb = b === '.' ? vacio : color(tam, b)
         if (ca === cb) {
           palabras[k] = 0x20
           palabras[k + 1] = SIN_COLOR
           palabras[k + 2] = cb
+        } else if (ca === SIN_COLOR) {
+          // Arriba transparente y abajo con color: medio bloque inferior con el color de abajo, y el fondo del terminal arriba.
+          palabras[k] = 0x2584
+          palabras[k + 1] = cb
+          palabras[k + 2] = SIN_COLOR
+          glifos += 1
         } else {
           palabras[k] = 0x2580
           palabras[k + 1] = ca
@@ -176,7 +221,7 @@ export function leerCeldas(c: { columnas: number; filas: number; cells: string }
 export type Dibujo = { source: string; ancho: number; alto: number }
 
 // Para la app de escritorio: un SVG con la tarjeta y un trazo por color (cada tramo horizontal es un rectángulo de una fila).
-export function dibujoSvg(tam: Tam, filas: readonly string[]): Dibujo {
+export function dibujoSvg(tam: TamX, filas: readonly string[]): Dibujo {
   return recordar(`s:${tam}:${filas.join('/')}`, () => {
     const ancho = filas[0]?.length ?? 0
     const trazos = new Map<string, string>()
@@ -196,7 +241,8 @@ export function dibujoSvg(tam: Tam, filas: readonly string[]): Dibujo {
     })
     const hex = (n: number) => n.toString(16).padStart(6, '0')
     const caminos = [...trazos].map(([c, d]) => `<path fill="#${hex(color(tam, c))}" d="${d}"/>`).join('')
-    const fondo = `<rect width="${ancho}" height="${filas.length}" rx="2" fill="#${hex(TARJETA)}"/>`
+    // Sin tarjeta en la hoja de «pensando» (sin contorno negro): el dibujo queda sobre el fondo del panel.
+    const fondo = !sobreTarjeta(tam) ? '' : `<rect width="${ancho}" height="${filas.length}" rx="2" fill="#${hex(TARJETA)}"/>`
     const source = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${ancho} ${filas.length}" shape-rendering="crispEdges">${fondo}${caminos}</svg>`
     return { source, ancho, alto: filas.length }
   })

@@ -6,6 +6,7 @@ declare module 'claude-code' {
       seleccion: LabSeleccion
       tic: number
       ticProto: number
+      ticConv: number
     }
   }
 }

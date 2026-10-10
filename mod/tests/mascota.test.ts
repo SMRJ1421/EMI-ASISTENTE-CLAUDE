@@ -1,7 +1,8 @@
-import { describe, expect, test } from 'claude-code/testing'
+import { describe, expect, mock, test } from 'claude-code/testing'
 
 import { esFalloReal, esRechazo, RECHAZO } from '../hooks/deteccion'
-import { celdas, colorDe, descomprimir, dibujoSvg, elegirTam, fotograma, fotogramas, indice, leerCeldas, medidas, ORDEN, planPanel, TARJETA } from '../hooks/dibujo'
+import { ESPECIAL } from '../hooks/animaciones'
+import { celdas, colorDe, descomprimir, dibujoSvg, elegirTam, especialEnBanda, especialQueCabe, filasDe, fotograma, fotogramaEn, fotogramas, indice, leerCeldas, medidas, ORDEN, planPanel, TARJETA } from '../hooks/dibujo'
 import { ESTADOS, FRASES, detalleDe, estadoDeHerramienta } from '../hooks/estados'
 import { ALFABETO, TAMANOS } from '../hooks/sprites'
 
@@ -417,5 +418,228 @@ describe('celdas Raster: espacio con fondo cuando las dos mitades son iguales', 
       }
     }
     expect(glifos / total).toBeLessThan(0.45)
+  })
+})
+
+describe('hula (de guardia) con 5 fotogramas a 4 fps sobre la tarjeta lila', () => {
+  test('la hoja tiene 5 fotogramas distintos y posa sobre la tarjeta (arte con contorno negro)', () => {
+    expect(ESPECIAL['hula']).toEqual({ tam: 'H5', chico: 'H5S', fps: 4, tarjeta: true })
+    expect(medidas('H5')).toEqual({ ancho: 60, alto: 60, filas: 30 })
+    expect(medidas('H5S')).toEqual({ ancho: 28, alto: 28, filas: 14 })
+    const vistos = new Set<string>()
+    for (let i = 0; i < 5; i += 1) {
+      const filas = filasDe('hula', 'H5', i)
+      expect(filas.length).toBe(60)
+      expect(filas.every(f => f.length === 60)).toBe(true)
+      vistos.add(filas.join('/'))
+    }
+    expect(vistos.size).toBe(5)
+    // Sobre la tarjeta: ninguna celda usa el color por defecto del terminal y el SVG lleva el recuadro.
+    const c = celdas('H5', filasDe('hula', 'H5', 0))
+    const bytes = (Uint8Array as unknown as { fromBase64: (s: string) => Uint8Array }).fromBase64(c.cells)
+    const w = new Uint32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 4)
+    expect(w[2]).toBe(TARJETA)
+    expect(dibujoSvg('H5', filasDe('hula', 'H5', 0)).source).toContain('<rect')
+  })
+
+  test('el fotograma avanza a 4 fps', () => {
+    const f = (ms: number) => fotogramaEn('hula', 'H5', ms).join('/')
+    expect(f(249)).toBe(f(0))
+    expect(f(250)).toBe(filasDe('hula', 'H5', 1).join('/'))
+    expect(f(1250)).toBe(f(0))
+  })
+})
+
+describe('sonido al terminar', () => {
+  test('cada vez que Claude termina suena el pitido de «listo», aunque el encargo sea corto; el globo de Windows solo en los largos', async ($, on) => {
+    const reloj = mock.clock(on)
+    const guiones: string[] = []
+    on('process.run', (_$, e) => {
+      guiones.push(JSON.stringify(e))
+      return { value: { exitCode: 0, stdout: '', stderr: '' } } as never
+    })
+    on('turn.start', (_$, e) => ({ turnId: e.turnId }))
+    on('turn.complete', () => ({ text: '' }))
+    on('env.get', (_$, e) => ({ value: (e as { name?: string }).name === 'OS' ? 'Windows_NT' : undefined }) as never)
+    on('command.register', () => ({ value: undefined }) as never)
+    on('session.start', (_$, e) => ({ cwd: e.cwd }) as never)
+    await $.session.start({ cwd: 'C:/x', source: 'startup' } as never)
+    await $.command.run({ command: 'emi', args: 'sonido' } as never)
+    await $.command.run({ command: 'emi', args: 'avisos' } as never)
+    await $.turn.start({ text: 'hola', turnId: 't20' })
+    await $.turn.complete({ reason: 'answer', turnId: 't20' } as never)
+    await reloj.advance(100)
+    const listos = guiones.filter(g => g.includes('Beep(784,110)'))
+    expect(listos.length).toBe(1)
+    expect(listos[0]).not.toContain('ShowBalloonTip')
+    await $.command.run({ command: 'emi', args: 'silencio' } as never)
+    await $.turn.start({ text: 'otra', turnId: 't21' })
+    await $.turn.complete({ reason: 'answer', turnId: 't21' } as never)
+    await reloj.advance(100)
+    expect(guiones.filter(g => g.includes('Beep(784,110)')).length).toBe(1)
+  })
+})
+
+describe('escribiendo / comandos con 5 fotogramas a 5 fps', () => {
+  test('la hoja tiene 5 fotogramas distintos de 60x60 sobre la tarjeta, y avanza uno cada 200 ms', () => {
+    expect(ESPECIAL['escribiendo']).toEqual({ tam: 'E5', chico: 'E5S', fps: 5, tarjeta: true })
+    expect(medidas('E5')).toEqual({ ancho: 60, alto: 60, filas: 30 })
+    expect(medidas('E5S')).toEqual({ ancho: 28, alto: 28, filas: 14 })
+    const vistos = new Set<string>()
+    for (let i = 0; i < 5; i += 1) {
+      const filas = filasDe('escribiendo', 'E5', i)
+      expect(filas.length).toBe(60)
+      expect(filas.every(f => f.length === 60)).toBe(true)
+      vistos.add(filas.join('/'))
+    }
+    expect(vistos.size).toBe(5)
+    const f = (ms: number) => fotogramaEn('escribiendo', 'E5', ms).join('/')
+    expect(f(199)).toBe(f(0))
+    expect(f(200)).toBe(filasDe('escribiendo', 'E5', 1).join('/'))
+    expect(f(1000)).toBe(f(0))
+    expect(especialQueCabe('escribiendo', 34, 60)).toBe('E5')
+    expect(especialEnBanda('escribiendo', 14, 151)).toBe('E5S')
+  })
+})
+
+describe('Emi en el escritorio (programa aparte)', () => {
+  test('/emi escritorio y /emi sin-escritorio lo activan y lo apagan, y el estado lo cuenta', async ($, on) => {
+    on('process.run', () => ({ value: { exitCode: 0, stdout: '', stderr: '' } }) as never)
+    const apagado = await $.command.run({ command: 'emi', args: 'sin-escritorio' } as never)
+    expect(JSON.stringify(apagado)).toContain('ya no flota')
+    expect(JSON.stringify(await $.command.run({ command: 'emi', args: '' } as never))).toContain('escritorio no')
+    const encendido = await $.command.run({ command: 'emi', args: 'escritorio' } as never)
+    expect(JSON.stringify(encendido)).toContain('flota sobre el escritorio')
+    expect(JSON.stringify(await $.command.run({ command: 'emi', args: '' } as never))).toContain('escritorio sí')
+  })
+})
+
+describe('pensando con 5 fotogramas a 5 fps (60x60)', () => {
+  test('la hoja tiene 5 fotogramas distintos, rectangulares y con colores válidos', () => {
+    expect(ESPECIAL['pensando']).toEqual({ tam: 'A5', chico: 'A5S', fps: 5, tarjeta: false })
+    expect(medidas('A5')).toEqual({ ancho: 60, alto: 60, filas: 30 })
+    const vistos = new Set<string>()
+    for (let i = 0; i < 5; i += 1) {
+      const filas = filasDe('pensando', 'A5', i)
+      expect(filas.length).toBe(60)
+      expect(filas.every(f => f.length === 60)).toBe(true)
+      expect(filas.join('').split('').every(c => c === '.' || ALFABETO.includes(c))).toBe(true)
+      vistos.add(filas.join('/'))
+    }
+    expect(vistos.size).toBe(5)
+    expect(fotogramas('pensando', 'A5').length).toBe(5)
+  })
+
+  test('el fotograma sale del tiempo: uno cada 200 ms y vuelve al principio al segundo', () => {
+    const f = (ms: number) => fotogramaEn('pensando', 'A5', ms).join('/')
+    expect(f(0)).toBe(filasDe('pensando', 'A5', 0).join('/'))
+    expect(f(199)).toBe(f(0))
+    expect(f(200)).toBe(filasDe('pensando', 'A5', 1).join('/'))
+    expect(f(800)).toBe(filasDe('pensando', 'A5', 4).join('/'))
+    expect(f(1000)).toBe(f(0))
+  })
+
+  test('solo se usa si cabe con el texto debajo (60 columnas y 34 filas) y solo para «pensando»', () => {
+    expect(especialQueCabe('pensando', 34, 60)).toBe('A5')
+    expect(especialQueCabe('pensando', 38, 62)).toBe('A5')
+    expect(especialQueCabe('pensando', 33, 62)).toBeNull()
+    expect(especialQueCabe('pensando', 38, 59)).toBeNull()
+    expect(especialQueCabe('hula', 52, 80)).toBe('H5')
+    expect(especialQueCabe('responde', 52, 80)).toBeNull()
+    expect(especialQueCabe('nueva', 52, 80)).toBeNull()
+  })
+
+  test('las celdas del panel caben en el motor: 60 columnas x 30 filas, menos de 1024 pares de color', () => {
+    for (let i = 0; i < 5; i += 1) {
+      const c = celdas('A5', filasDe('pensando', 'A5', i))
+      expect([c.columnas, c.filas]).toEqual([60, 30])
+      const v = leerCeldas(c)
+      expect(new Set(v.arriba.map((a, k) => `${a}/${v.abajo[k]}`)).size).toBeLessThanOrEqual(1024)
+    }
+  })
+
+  test('el fondo es transparente: los píxeles vacíos usan el color por defecto del terminal, sin tarjeta lila', () => {
+    const SIN = 0x01000000
+    for (let i = 0; i < 5; i += 1) {
+      const c = celdas('A5', filasDe('pensando', 'A5', i))
+      const bytes = (Uint8Array as unknown as { fromBase64: (s: string) => Uint8Array }).fromBase64(c.cells)
+      const w = new Uint32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 4)
+      let vacias = 0
+      let mediasInferiores = 0
+      for (let k = 0; k < c.columnas * c.filas; k += 1) {
+        const [glifo, fg, bg] = [w[k * 3] ?? 0, w[k * 3 + 1] ?? 0, w[k * 3 + 2] ?? 0]
+        expect([fg, bg]).not.toContain(TARJETA)
+        if (glifo === 0x20 && bg === SIN) {
+          vacias += 1
+        }
+        if (glifo === 0x2584) {
+          mediasInferiores += 1
+          expect(bg).toBe(SIN)
+          expect(fg).not.toBe(SIN)
+        }
+        if (glifo === 0x2580) {
+          expect(fg).not.toBe(SIN)
+        }
+      }
+      expect(vacias).toBeGreaterThan(c.columnas * c.filas * 0.3)
+      expect(mediasInferiores).toBeGreaterThan(0)
+    }
+  })
+
+  test('en la app de escritorio el panel también usa la animación nueva (SVG 60x60, sin tarjeta) en «pensando»', async ($, on) => {
+    on('turn.start', (_$, e) => ({ turnId: e.turnId }))
+    await $.turn.start({ text: 'hola', turnId: 't10' })
+    const ui = await $.ui.mount({ plugin: 'mascota', surface: 'desktop', component: 'Pane', requestId: 'emi', props: PANEL })
+    const svg = JSON.stringify(await ui.find({ type: 'Svg' }))
+    expect(svg).toContain('viewBox=\\"0 0 60 60\\"')
+    expect(svg).not.toContain('<rect')
+    await ui.unmount()
+  })
+
+  test('la banda de la app de escritorio también usa la animación nueva en «pensando»', async ($, on) => {
+    on('turn.start', (_$, e) => ({ turnId: e.turnId }))
+    await $.turn.start({ text: 'hola', turnId: 't11' })
+    const ui = await $.ui.mount({ plugin: 'mascota', surface: 'desktop', component: 'AbovePrompt', props: BANDA })
+    const svg = JSON.stringify(await ui.find({ type: 'Svg' }))
+    expect(svg).toContain('viewBox=\\"0 0 60 60\\"')
+    expect(svg).not.toContain('<rect')
+    await ui.unmount()
+  })
+
+  test('banda del terminal: 60x60 si cabe, 28x28 en las 14 filas de siempre y nada si no hay sitio', () => {
+    expect(especialEnBanda('pensando', 40, 140)).toBe('A5')
+    expect(especialEnBanda('pensando', 14, 151)).toBe('A5S')
+    expect(especialEnBanda('pensando', 13, 151)).toBeNull()
+    expect(especialEnBanda('pensando', 14, 40)).toBeNull()
+    expect(especialEnBanda('hula', 40, 140)).toBe('H5')
+    expect(especialEnBanda('hula', 14, 151)).toBe('H5S')
+    expect(especialEnBanda('responde', 40, 140)).toBeNull()
+    expect(medidas('A5S')).toEqual({ ancho: 28, alto: 28, filas: 14 })
+    for (let i = 0; i < 5; i += 1) {
+      const filas = filasDe('pensando', 'A5S', i)
+      expect(filas.length).toBe(28)
+      expect(filas.every(f => f.length === 28)).toBe(true)
+    }
+  })
+
+  test('la banda del terminal dibuja la animación de «pensando» con 14 filas', async ($, on) => {
+    on('turn.start', (_$, e) => ({ turnId: e.turnId }))
+    await $.turn.start({ text: 'hola', turnId: 't12' })
+    const ui = await $.ui.mount({ plugin: 'mascota', surface: 'terminal', component: 'AbovePrompt', props: { ...BANDA, maxRows: 15, bodyColumns: 151 } })
+    expect(await ui.find({ type: 'Raster' })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: 'compacta' })).toBeDefined()
+    await ui.unmount()
+  })
+
+  test('el panel dibuja 60 x 60 en «pensando» cuando cabe y el sprite de siempre cuando no', async ($, on) => {
+    on('turn.start', (_$, e) => ({ turnId: e.turnId }))
+    await $.turn.start({ text: 'hola', turnId: 't9' })
+    const ancho = await $.ui.mount({ plugin: 'mascota', surface: 'terminal', component: 'Pane', requestId: 'emi', props: { ...PANEL, bodyColumns: 62, scroll: { offset: 0, bodyRows: 38 } } })
+    expect(await ancho.find({ type: 'Text', text: '60 x 60' })).toBeDefined()
+    await ancho.unmount()
+    const estrecho = await $.ui.mount({ plugin: 'mascota', surface: 'terminal', component: 'Pane', requestId: 'emi', props: { ...PANEL, bodyColumns: 42, scroll: { offset: 0, bodyRows: 38 } } })
+    expect(await estrecho.find({ type: 'Text', text: '60 x 60' })).toBeUndefined()
+    expect(await estrecho.find({ type: 'Text', text: '40 x 60' })).toBeDefined()
+    await estrecho.unmount()
   })
 })

@@ -7,6 +7,7 @@ import { indiceEn } from './animacion'
 import type { Perfil } from './animacion'
 import { celdas2 } from './celdas2'
 import type { Tam } from './sprites'
+import { ANIMACIONES, celdasConv, indiceConv } from './convdibujo'
 
 type $ = EngineInterface
 
@@ -202,6 +203,26 @@ async function bench($: $) {
   }
 }
 
+// Prueba de estados con más fotogramas: /emiconv [nueva|pensando|hula|escribiendo] nat60 | nn60 | nn48 | nn40 | nn30 | actual [fps] | off.
+const CONVPANEL = 'emiconv'
+const ticConv = atom({ plugin: 'mascota-lab', key: 'ticConv' } as const, 0)
+let convEstado = 'nueva'
+let convVariante = 'nat60'
+let convFps = 8
+let convInicio = 0
+let convTimer: Timer | undefined
+
+function convCeldas(ms: number) {
+  if (convVariante === 'actual') {
+    const total = fotogramas(convEstado, 'M').length
+    return { ...celdas2('M', filasDe(convEstado, 'M', indiceConv(ms, convFps, total))), fotograma: indiceConv(ms, convFps, total) + 1, de: total }
+  }
+  const de = ANIMACIONES[convEstado]?.variantes[convVariante]?.fotogramas.length ?? 0
+  const i = indiceConv(ms, convFps, de)
+  const x = celdasConv(convVariante, i, convEstado)
+  return x ? { ...x, fotograma: i + 1, de } : null
+}
+
 
 export const register: Register = on => {
   on('command.run', { command: 'emiproto' }, async ($, e) => {
@@ -261,6 +282,63 @@ export const register: Register = on => {
   })
 
 
+  on('command.run', { command: 'emiconv' }, async ($, e) => {
+    const partes = e.args.trim().toLowerCase().split(/\s+/).filter(Boolean)
+    const estado = partes[0] && partes[0] in ANIMACIONES ? partes.shift()! : 'nueva'
+    const orden = partes[0] ?? ''
+    const fpsTexto = partes[1] ?? ''
+    if (orden === 'off') {
+      convTimer?.cancel()
+      convTimer = undefined
+      await $.ui.close({ id: CONVPANEL }).catch(() => undefined)
+      return { text: 'Prueba de estados apagada.' }
+    }
+    const anim = ANIMACIONES[estado]!
+    if (orden !== 'actual' && !anim.variantes[orden]) {
+      return { text: `Uso: /emiconv [${Object.keys(ANIMACIONES).join('|')}] ${[...Object.keys(anim.variantes), 'actual'].join(' | ')} [fps] | off  (por defecto nat60 a ${anim.fps} fps en «${estado}»; actual = el estado de hoy, 40x60, 2 fps)` }
+    }
+    const fps = Number(fpsTexto)
+    convEstado = estado
+    convVariante = orden
+    convFps = fps > 0 && fps <= 30 ? fps : orden === 'actual' ? 2 : anim.fps
+    convInicio = await $.clock.now()
+    await $.ui.open({ id: CONVPANEL, title: `Emi · ${estado}`, columns: 64 }).catch(() => undefined)
+    convTimer?.cancel()
+    // Dos tics por fotograma (mínimo 50 ms): el fotograma sale del reloj, así que el tic solo fija cuánto tarda en verse el cambio.
+    convTimer = $.clock.every(Math.max(50, Math.round(500 / convFps)), () => {
+      void update($, ticConv, n => n + 1).catch(() => undefined)
+    })
+    return { text: `Panel abierto: ${estado} · ${orden} a ${convFps} fps. Cambia con /emiconv [estado] <variante> [fps]; /emiconv off lo cierra.` }
+  })
+
+  on('ui.render', { component: 'Pane', requestId: CONVPANEL }, async ($, e) => {
+    await read($, ticConv)
+    if (e.surface !== 'terminal') {
+      const { Text } = $.ui.resolve(e)
+      return <Text dimColor>La prueba solo dibuja en el terminal.</Text>
+    }
+    const { Box, Raster, Text } = $.ui.resolve(e)
+    const x = convCeldas((await $.clock.now()) - convInicio)
+    if (!x) {
+      return <Text color="red">Variante desconocida.</Text>
+    }
+    const caben = e.props.bodyColumns >= x.columnas && e.props.scroll.bodyRows >= x.filas + 3
+    if (!caben) {
+      return <Text color="red">Panel demasiado pequeño: hacen falta {x.columnas} columnas y {x.filas + 3} filas (hay {e.props.bodyColumns} y {e.props.scroll.bodyRows}).</Text>
+    }
+    return (
+      <Box flexDirection="column">
+        <Raster key="conv" columns={x.columnas} rows={x.filas} cells={x.cells} />
+        <Text bold wrap="truncate-end">
+          {convEstado} · {convVariante} · {convFps} fps · fotograma {x.fotograma}/{x.de}
+        </Text>
+        <Text dimColor wrap="truncate-end">
+          {x.columnas} x {x.filas * 2} px · glifos {x.glifos} de {x.columnas * x.filas} celdas
+        </Text>
+      </Box>
+    )
+  })
+
   on('session.start', async ($, e, next) => {
     const hecho = await next(e)
     const casa = (await $.env.get('HOME').catch(() => undefined)) ?? (await $.env.get('USERPROFILE').catch(() => undefined))
@@ -289,6 +367,12 @@ export const register: Register = on => {
       name: 'emiproto',
       description: 'Prototipo de animación de Emi: /emiproto atomo | atomo8 | blit | fluido | bench | off',
       argumentHint: '[atomo | atomo8 | blit | fluido | bench | off]',
+      immediate: true,
+    })
+    await $.command.register({
+      name: 'emiconv',
+      description: 'Prueba de estados con más fotogramas: /emiconv [nueva|pensando|hula] nat60 | nn60 | nn48 | nn40 | nn30 | actual [fps] | off',
+      argumentHint: '[nueva | pensando] [nat60 | nn60 | nn48 | nn40 | nn30 | actual] [fps] | off',
       immediate: true,
     })
     // Medición automática de una sola vez: si auto.txt contiene «bench», compara las tres formas de animar y deja bench.json.
