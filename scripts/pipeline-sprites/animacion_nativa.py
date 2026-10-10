@@ -13,7 +13,10 @@ import numpy as np
 from PIL import Image
 
 RAIZ = Path(__file__).resolve().parents[2]
-ESTADOS = {'escribiendo': dict(entrada='animacion-emi-escribiendo-comandos', ts='escribiendo.ts', const='ESCR', titulo='Escribiendo / comandos')}
+ESTADOS = {
+    'escribiendo': dict(entrada='animacion-emi-escribiendo-comandos', patron='*-frame-*.png', ts='escribiendo.ts', const='ESCR', titulo='Escribiendo / comandos', modo='nativa'),
+    'pensando': dict(entrada='EMI-PENSANDO', patron='*.png', ts='pensando.ts', const='PENS', titulo='Pensando', modo='ilustrada'),
+}
 ESTADO = sys.argv[1] if len(sys.argv) > 1 else 'escribiendo'
 CFG = ESTADOS[ESTADO]
 ENTRADA = RAIZ / 'arte' / CFG['entrada']
@@ -23,9 +26,35 @@ ALFABETO = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%&*
 CUENTA = '0123456789abcdefghijklmnopqrstuvwxyz'
 TARJETA = (0xF5, 0xE6, 0xFD)
 
-archivos = sorted(f for f in ENTRADA.glob('*-frame-*.png') if 'alta-resolucion' not in f.name)
+archivos = sorted(f for f in ENTRADA.glob(CFG['patron']) if 'alta-resolucion' not in f.name)
 frames = [np.array(Image.open(f).convert('RGBA')) for f in archivos]
-assert frames and all(f.shape == (60, 60, 4) for f in frames), 'se esperaban fotogramas de 60x60'
+if CFG['modo'] == 'nativa':
+    assert frames and all(f.shape == (60, 60, 4) for f in frames), 'se esperaban fotogramas de 60x60'
+
+
+def reducir(f: np.ndarray, caja: tuple, alto_fig: int, lienzo: int) -> np.ndarray:
+    """Recorta `caja` (la misma para todos los fotogramas), la reduce con Lanczos a `alto_fig` de alto y la deja abajo y centrada en `lienzo` x `lienzo`."""
+    x0, y0, x1, y1 = caja
+    ancho_fig = round((x1 - x0) * alto_fig / (y1 - y0))
+    a = f[y0:y1, x0:x1].astype(float)
+    a[..., :3] *= a[..., 3:4] / 255  # color premultiplicado: el borde no sangra el color del fondo
+    r = np.array(Image.fromarray(a.astype(np.uint8), 'RGBA').resize((ancho_fig, alto_fig), Image.LANCZOS)).astype(float)
+    alfa = r[..., 3:4] / 255
+    col = np.where(alfa > 0, r[..., :3] / np.maximum(alfa, 1e-6), 0)
+    sal = np.zeros((lienzo, lienzo, 4), np.uint8)
+    ox, oy = (lienzo - ancho_fig) // 2, lienzo - alto_fig - max(1, lienzo // 30)
+    sal[oy:oy + alto_fig, ox:ox + ancho_fig, :3] = np.clip(col, 0, 255)
+    sal[oy:oy + alto_fig, ox:ox + ancho_fig, 3] = np.where(alfa[..., 0] >= 0.5, 255, 0)
+    sal[sal[..., 3] == 0] = 0
+    return sal
+
+
+if CFG['modo'] == 'ilustrada':
+    cajas = []
+    for f in frames:
+        ys, xs = np.where(f[..., 3] >= 128)
+        cajas.append((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
+    CAJA = (min(c[0] for c in cajas), min(c[1] for c in cajas), max(c[2] for c in cajas), max(c[3] for c in cajas))
 
 
 def binario(f: np.ndarray) -> np.ndarray:
@@ -50,13 +79,17 @@ def a_28(f: np.ndarray) -> np.ndarray:
     return sal
 
 
-def cuantizar(imgs: list[np.ndarray], maximo: int = 88):
+def cuantizar(imgs: list[np.ndarray], maximo: int = 88, refuerzo: int = 0):
     opacos = np.concatenate([im[im[..., 3] > 0][:, :3] for im in imgs])
     unicos, cuentas = np.unique(opacos, axis=0, return_counts=True)
     if len(unicos) <= maximo:
         return [tuple(int(v) for v in c) for c in unicos], 0.0, len(unicos)
-    q = Image.fromarray(unicos.astype(np.uint8)[None, :, :]).quantize(colors=maximo, method=Image.MEDIANCUT, dither=Image.NONE)
-    pal = np.array(q.getpalette()[:maximo * 3]).reshape(-1, 3)
+    q = Image.fromarray(unicos.astype(np.uint8)[None, :, :]).quantize(colors=maximo - refuerzo, method=Image.MEDIANCUT, dither=Image.NONE)
+    pal = np.array(q.getpalette()[:(maximo - refuerzo) * 3]).reshape(-1, 3)
+    # Colores raros pero visibles (el adorno rojo del pelo): `refuerzo` plazas para los más alejados de la paleta, pesados por la raíz de su uso.
+    for _ in range(refuerzo):
+        d = ((unicos[:, None, :].astype(int) - pal[None, :, :]) ** 2).sum(-1).min(1)
+        pal = np.vstack([pal, unicos[int(np.argmax(np.sqrt(d) * np.sqrt(cuentas)))]])
     d = ((unicos[:, None, :].astype(int) - pal[None, :, :]) ** 2).sum(-1)
     return [tuple(int(v) for v in c) for c in pal], float(np.sqrt((d.min(1) * cuentas).sum() / cuentas.sum())), len(unicos)
 
@@ -86,18 +119,20 @@ def a_rgb(im: np.ndarray, pal: list) -> np.ndarray:
     return sal
 
 
-limpios = [binario(f) for f in frames]
-variantes = {'nat60': limpios, 'nat28': [a_28(f) for f in frames]}
+if CFG['modo'] == 'ilustrada':
+    variantes = {'nat60': [reducir(f, CAJA, 58, 60) for f in frames], 'nat28': [reducir(f, CAJA, 26, 28) for f in frames]}
+else:
+    variantes = {'nat60': [binario(f) for f in frames], 'nat28': [a_28(f) for f in frames]}
 datos, informe, vistas = {}, {'archivos': [a.name for a in archivos], 'fotogramas_identicos': sum(1 for i in range(len(frames)) for j in range(i) if (frames[i] == frames[j]).all())}, {}
 for nombre, imgs in variantes.items():
-    pal, err, exactos = cuantizar(imgs)
+    pal, err, exactos = cuantizar(imgs, refuerzo=10 if CFG['modo'] == 'ilustrada' else 0)
     datos[nombre] = {'ancho': imgs[0].shape[1], 'alto': imgs[0].shape[0], 'paleta': ['#%02x%02x%02x' % c for c in pal],
                      'fotogramas': ['/'.join(codificar_fila(f) for f in a_texto(im, pal)) for im in imgs]}
     informe[nombre] = {'colores_exactos': exactos, 'colores_en_paleta': len(pal), 'error_de_color_rgb': round(err, 2)}
     vistas[nombre] = [a_rgb(im, pal) for im in imgs]
 
 lineas = [
-    f"// Generado por scripts\\pipeline-sprites\\animacion_nativa.py {ESTADO} desde arte\\{CFG['entrada']} ({len(frames)} PNG de 60x60). No editar a mano.",
+    f"// Generado por scripts\\pipeline-sprites\\animacion_nativa.py {ESTADO} desde arte\\{CFG['entrada']} ({len(frames)} PNG, modo {CFG['modo']}). No editar a mano.",
     f"// Variantes del estado «{CFG['titulo']}» ({len(frames)} fotogramas). Filas separadas por «/», «.» transparente, «§»+largo+color = tramo repetido.",
     "import type { VarianteConv } from './convdibujo'",
     f"export const {CFG['const']}: Record<string, VarianteConv> = " + json.dumps(datos, ensure_ascii=False, indent=1),

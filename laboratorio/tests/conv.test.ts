@@ -65,27 +65,27 @@ test('el panel de «Conversación nueva» avanza un fotograma cada 125 ms a 8 fp
   await ui.unmount()
 })
 
-test('pensando: 5 fotogramas distintos en cada variante, rectangulares y que caben en el Dock; a 5 fps, uno cada 200 ms', () => {
+test('pensando: 8 fotogramas distintos en cada variante (nat60 y nat28), rectangulares y que caben en el Dock; a 5 fps, uno cada 200 ms', () => {
   expect(ANIMACIONES['pensando']?.fps).toBe(5)
-  for (const nombre of VARIANTES_CONV) {
+  for (const nombre of ['nat60', 'nat28']) {
     const v = ANIMACIONES['pensando']!.variantes[nombre]!
-    expect(v.fotogramas.length).toBe(5)
+    expect(v.fotogramas.length).toBe(8)
     expect(v.paleta.length).toBeLessThanOrEqual(88)
     const textos = new Set<string>()
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < 8; i += 1) {
       const filas = filasConv(nombre, i, 'pensando')
       expect(filas.length).toBe(v.alto)
       expect(filas.every(f => f.length === v.ancho)).toBe(true)
       textos.add(filas.join('/'))
     }
-    expect(textos.size).toBe(5)
+    expect(textos.size).toBe(8)
   }
   const x = celdasConv('nat60', 0, 'pensando')!
   expect(x.columnas).toBeLessThanOrEqual(64)
   expect(x.filas + 3).toBeLessThanOrEqual(35)
-  expect(Array.from({ length: 5 }, (_, i) => indiceConv(i * 200, 5, 5))).toEqual([0, 1, 2, 3, 4])
-  expect(indiceConv(199, 5, 5)).toBe(0)
-  expect(indiceConv(1000, 5, 5)).toBe(0)
+  expect(Array.from({ length: 8 }, (_, i) => indiceConv(i * 200, 5, 8))).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
+  expect(indiceConv(199, 5, 8)).toBe(0)
+  expect(indiceConv(1600, 5, 8)).toBe(0)
 })
 
 test('el panel de «pensando» avanza a 5 fps por defecto (reloj simulado)', async ($, on) => {
@@ -95,13 +95,13 @@ test('el panel de «pensando» avanza a 5 fps por defecto (reloj simulado)', asy
   const ui = await $.ui.mount({ plugin: 'mascota-lab', surface: 'terminal', component: 'Pane', requestId: 'emiconv', props: PANEL })
   await $.command.run({ command: 'emiconv', args: 'pensando nat60' } as never)
   const vistos: number[] = []
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 8; i += 1) {
     await reloj.advance(200)
     const t = await ui.find({ type: 'Text', text: 'fotograma' })
-    const m = /pensando · nat60 · 5 fps · fotograma (\d)\/5/.exec(JSON.stringify(t))
+    const m = /pensando · nat60 · 5 fps · fotograma (\d)\/8/.exec(JSON.stringify(t))
     vistos.push(Number(m?.[1] ?? Number.NaN))
   }
-  expect(new Set(vistos).size).toBe(5)
+  expect(new Set(vistos).size).toBe(8)
   await $.command.run({ command: 'emiconv', args: 'off' } as never)
   await ui.unmount()
 })

@@ -514,29 +514,30 @@ describe('Emi en el escritorio (programa aparte)', () => {
   })
 })
 
-describe('pensando con 5 fotogramas a 5 fps (60x60)', () => {
-  test('la hoja tiene 5 fotogramas distintos, rectangulares y con colores válidos', () => {
+describe('pensando con 8 fotogramas a 5 fps (60x60)', () => {
+  test('la hoja tiene 8 fotogramas distintos, rectangulares y con colores válidos', () => {
     expect(ESPECIAL['pensando']).toEqual({ tam: 'A5', chico: 'A5S', fps: 5, tarjeta: false })
     expect(medidas('A5')).toEqual({ ancho: 60, alto: 60, filas: 30 })
     const vistos = new Set<string>()
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < 8; i += 1) {
       const filas = filasDe('pensando', 'A5', i)
       expect(filas.length).toBe(60)
       expect(filas.every(f => f.length === 60)).toBe(true)
       expect(filas.join('').split('').every(c => c === '.' || ALFABETO.includes(c))).toBe(true)
       vistos.add(filas.join('/'))
     }
-    expect(vistos.size).toBe(5)
-    expect(fotogramas('pensando', 'A5').length).toBe(5)
+    expect(vistos.size).toBe(8)
+    expect(fotogramas('pensando', 'A5').length).toBe(8)
   })
 
-  test('el fotograma sale del tiempo: uno cada 200 ms y vuelve al principio al segundo', () => {
+  test('el fotograma sale del tiempo: uno cada 200 ms y vuelve al principio a los 1,6 s', () => {
     const f = (ms: number) => fotogramaEn('pensando', 'A5', ms).join('/')
     expect(f(0)).toBe(filasDe('pensando', 'A5', 0).join('/'))
     expect(f(199)).toBe(f(0))
     expect(f(200)).toBe(filasDe('pensando', 'A5', 1).join('/'))
     expect(f(800)).toBe(filasDe('pensando', 'A5', 4).join('/'))
-    expect(f(1000)).toBe(f(0))
+    expect(f(1400)).toBe(filasDe('pensando', 'A5', 7).join('/'))
+    expect(f(1600)).toBe(f(0))
   })
 
   test('solo se usa si cabe con el texto debajo (60 columnas y 34 filas) y solo para «pensando»', () => {
