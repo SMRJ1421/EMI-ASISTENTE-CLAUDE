@@ -2,7 +2,7 @@
 
 Lo lanza el mod (al abrir una sesión) y se cierra solo cuando ya no queda ninguna sesión de Claude abierta.
 Lee el estado de ~/.claude/mascota/sesiones/*.json (lo escribe el mod) y los fotogramas de escritorio/frames/*.png
-(los genera exportar_frames.py). Solo usa tkinter y Pillow; no abre red ni toca nada fuera de ~/.claude/mascota.
+(los genera exportar_frames.py). Solo usa Python 3 con tkinter (sin Pillow); no abre red ni toca nada fuera de ~/.claude/mascota.
 Arrastra a Emi para moverla; clic derecho: tamaño o cerrar. /emi sin-escritorio también la cierra.
 """
 import json
@@ -12,8 +12,6 @@ import sys
 import time
 import tkinter as tk
 from pathlib import Path
-
-from PIL import Image, ImageTk
 
 AQUI = Path(__file__).resolve().parent
 FRAMES = AQUI / 'frames'
@@ -29,11 +27,12 @@ LENTOS = {'nueva', 'leyendo', 'duerme'}  # 2 fps; pensando va a 5 fps; el resto 
 PRIORIDAD = {'necesita': 6, 'falla': 5, 'para': 5, 'baile': 4, 'terminado': 4, 'pensando': 3, 'responde': 3, 'leyendo': 3, 'escribiendo': 3}
 
 
-def cargar_frames() -> dict[str, list[Image.Image]]:
-    por_estado: dict[str, list[Image.Image]] = {}
+def cargar_frames() -> dict[str, list[tk.PhotoImage]]:
+    """Los PNG de frames/ (Tk 8.6 los lee con su transparencia); hay que crear la ventana raíz antes."""
+    por_estado: dict[str, list[tk.PhotoImage]] = {}
     for archivo in sorted(FRAMES.glob('*_*.png')):
         estado = archivo.stem.rsplit('_', 1)[0]
-        por_estado.setdefault(estado, []).append(Image.open(archivo).convert('RGBA'))
+        por_estado.setdefault(estado, []).append(tk.PhotoImage(file=str(archivo)))
     return por_estado
 
 
@@ -66,6 +65,7 @@ def fotograma_de(estado: str, desde: float, cuantos: int) -> int:
 
 class Emi:
     def __init__(self) -> None:
+        self.raiz = tk.Tk()
         self.frames = cargar_frames()
         if not self.frames:
             sys.exit(0)
@@ -74,9 +74,8 @@ class Emi:
         self.estado = 'hula'
         self.desde = time.time()
         self.sin_sesiones_desde: float | None = None
-        self.cache: dict[tuple[str, int, int], ImageTk.PhotoImage] = {}
+        self.cache: dict[tuple[str, int, int], tk.PhotoImage] = {}
 
-        self.raiz = tk.Tk()
         self.raiz.overrideredirect(True)
         self.raiz.attributes('-topmost', True)
         self.raiz.config(bg=CLAVE)
@@ -96,7 +95,7 @@ class Emi:
     # ---- ventana ----
     def tam(self) -> tuple[int, int]:
         base = next(iter(self.frames.values()))[0]
-        return base.width * self.escala, base.height * self.escala
+        return base.width() * self.escala, base.height() * self.escala
 
     def colocar(self) -> None:
         w, h = self.tam()
@@ -150,10 +149,7 @@ class Emi:
         clave = (self.estado, i, self.escala)
         foto = self.cache.get(clave)
         if foto is None:
-            im = lista[i]
-            fondo = Image.new('RGBA', im.size, CLAVE)
-            fondo.alpha_composite(im)
-            foto = ImageTk.PhotoImage(fondo.convert('RGB').resize((im.width * self.escala, im.height * self.escala), Image.NEAREST))
+            foto = lista[i].zoom(self.escala)  # ampliación entera: píxeles cuadrados, sin suavizar
             self.cache[clave] = foto
         self.etiqueta.config(image=foto)
 

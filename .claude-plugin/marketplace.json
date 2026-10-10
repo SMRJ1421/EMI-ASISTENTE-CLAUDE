@@ -1,0 +1,11 @@
+{
+  "name": "emilia-mascota",
+  "owner": { "name": "SMRJ1421" },
+  "plugins": [
+    {
+      "name": "mascota",
+      "source": "./mod",
+      "description": "Emi, una mascota en pixel art para Claude Code: reacciona a lo que hace Claude (piensa, lee, escribe, te necesita, falla, termina) en un panel acoplado, en la banda sobre el prompt y flotando en el escritorio de Windows."
+    }
+  ]
+}

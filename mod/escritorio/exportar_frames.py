@@ -11,7 +11,7 @@ from pathlib import Path
 
 from PIL import Image
 
-RAIZ = Path(__file__).resolve().parents[1]
+RAIZ = Path(__file__).resolve().parents[2]  # mod\escritorio -> raíz del proyecto
 SALIDA = Path(__file__).resolve().parent / 'frames'
 ALFABETO = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%&*+,-:;<=>?@^_~()[]{}|'
 CUENTA = '0123456789abcdefghijklmnopqrstuvwxyz'

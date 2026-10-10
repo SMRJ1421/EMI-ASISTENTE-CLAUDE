@@ -1,5 +1,5 @@
 """Prueba de humo del programa de escritorio, sin tocar tu ~/.claude: sesión falsa, una sola instancia y cierre al quedarse sin sesiones.
-Uso: python escritorio\prueba_humo.py (abre una ventana de Emi unos segundos)."""
+Uso: python escritorio/prueba_humo.py (abre una ventana de Emi unos segundos)."""
 import json, os, subprocess, sys, tempfile, time
 from pathlib import Path
 PROGRAMA = str(Path(__file__).resolve().parent / 'emi_escritorio.pyw')

@@ -36,8 +36,9 @@ let inicioTurno = 0
 let herramientas = 0
 let actual: MascotaEstado = 'hula'
 let desdeActual = 0
-// El programa de escritorio (escritorio\emi_escritorio.pyw) vive en el proyecto; si no existe en esta ruta, el mod sigue sin él.
+// El programa de Emi escritorio (mod\escritorio\emi_escritorio.pyw); si no existe o falta Python, el mod sigue sin él.
 let rutaEscritorio = ''
+let avisadoPython = false
 let enDemo = false
 let ultimoAviso = 0
 let carpeta = ''
@@ -146,8 +147,17 @@ async function lanzarEscritorio($: $) {
   if (!a.escritorio) {
     return
   }
-  const guion = `$p='${rutaEscritorio}';if(Test-Path $p){Start-Process pythonw -ArgumentList ('"'+$p+'"') -WindowStyle Hidden}`
-  void $.process.run(['powershell', '-NoProfile', '-NonInteractive', '-Command', guion], { timeoutMs: 20000 }).catch(() => undefined)
+  // Salida 2: no está el programa; 3: no hay Python (pythonw). Cualquier otra: lanzado (o ya había una Emi escritorio).
+  const guion = `$p='${rutaEscritorio.replace(/'/g, "''")}';if(-not(Test-Path $p)){exit 2};if(-not(Get-Command pythonw -ErrorAction SilentlyContinue)){exit 3};Start-Process pythonw -ArgumentList ('"'+$p+'"') -WindowStyle Hidden`
+  void $.process
+    .run(['powershell', '-NoProfile', '-NonInteractive', '-Command', guion], { timeoutMs: 20000 })
+    .then(r => {
+      if (r.exitCode === 3 && !avisadoPython) {
+        avisadoPython = true
+        $.ui.toast('Emi escritorio necesita Python 3 (con tkinter) instalado. Sin él Emi sigue en Claude; /emi sin-escritorio quita este aviso.', { timeoutMs: 12000 })
+      }
+    })
+    .catch(() => undefined)
 }
 
 async function contarOtras($: $) {
@@ -277,7 +287,8 @@ export const register: Register = on => {
     const hecho = await next(e)
     const casa = (await $.env.get('HOME').catch(() => undefined)) ?? (await $.env.get('USERPROFILE').catch(() => undefined))
     carpeta = casa ? `${casa}/.claude/mascota` : ''
-    rutaEscritorio = casa ? `${casa}/Proyectos/mods-claude/emilia-mascota/escritorio/emi_escritorio.pyw` : ''
+    // El programa de Emi escritorio viaja dentro del mod: funciona igual instalado desde el marketplace que cargado con --plugin-dir.
+    rutaEscritorio = `${$.plugin.root}/escritorio/emi_escritorio.pyw`
     idSesion = await $.session.id().catch(() => '')
     esWindows = (await $.env.get('OS').catch(() => undefined)) === 'Windows_NT'
 

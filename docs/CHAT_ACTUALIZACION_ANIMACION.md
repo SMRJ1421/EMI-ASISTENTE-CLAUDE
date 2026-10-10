@@ -156,3 +156,14 @@ egister.tsx` (`publicar` con estado, `lanzarEscritorio`, comandos), `tests\masco
 **Verificación:** `claude plugin test mod` 49/49, laboratorio 21/21, tsc y validate limpios. Laboratorio: `/emiconv escribiendo nat60|nat28`. **No visto aún en pantalla real.**
 **Copias:** `respaldos\escribiendo-originales\` (PNG y GIF con SHA-256), `respaldos\mascota-2026-10-09-antes-de-escribiendo\`, `respaldos\escritorio-2026-10-09-antes-de-escribiendo\`.
 **Pendiente a la vista:** hay otra carpeta nueva, `arte\te-responde\` (estado «responde»), sin procesar.
+
+## 15. Instalación en una línea (marketplace)
+**Pedido:** que otra persona instale el mod con solo llamar a Claude con la URL del repositorio, y que quede todo listo.
+**Cómo se hizo**
+- `.claude-plugin\marketplace.json` en la raíz del repositorio: lo convierte en un marketplace con un plugin, `mascota`, cuyo `source` es `./mod`. Con eso la instalación es una línea en una sesión de terminal: `/plugin install mascota --marketplace SMRJ1421/emilia-mascota` (responder `y` y elegir el ámbito). Actualizar: `claude plugin update mascota`. La app de escritorio carga los mods instalados desde la terminal, pero el comando `/plugin` solo existe en la terminal.
+- **Emi escritorio viaja dentro del mod**: `escritorio\` se movió a `mod\escritorio\` (con `git mv`) porque el marketplace solo copia `mod\`. El mod calcula la ruta con `$.plugin.root` en vez de una ruta fija, así que funciona igual instalado, con `--plugin-dir` o con `CLAUDE_CODE_PLUGIN_DIRS`. `exportar_frames.py` y `prueba_humo.py` se adaptaron; ahora se corre `python mod\escritorio\exportar_frames.py`.
+- **Sin Pillow:** `emi_escritorio.pyw` ya no usa Pillow; lee los PNG con `tk.PhotoImage` (Tk 8.6) y amplía con `zoom` (escala entera). Solo hace falta **Python 3 con tkinter** (`pythonw` en el PATH). Si no hay Python, el mod avisa una vez con un aviso y sigue sin Emi escritorio (`/emi sin-escritorio` quita el aviso).
+- README reescrito con la línea de instalación, los requisitos y los pasos.
+**Verificación:** `claude plugin validate .` pasa. Instalación probada de punta a punta en una carpeta de configuración temporal (`CLAUDE_CONFIG_DIR`, sin tocar la del usuario): `marketplace add` + `install mascota@emilia-mascota` copiaron `escritorio\emi_escritorio.pyw` y `escritorio\frames\`. `claude plugin test mod` 49/49, tsc limpio, `prueba_humo.py` pasa con tkinter solo.
+**No probado:** instalar desde GitHub de verdad (hace falta que el repositorio esté subido y sea público o accesible) ni en un equipo ajeno; cómo se ve Emi escritorio con `PhotoImage` en la pantalla del usuario (cambió el dibujo respecto a Pillow).
+**Pendiente de decisión del usuario:** la visibilidad del repositorio (hoy es **público**; contiene arte propio y su correo en los commits) y qué publicar antes de compartirlo. Ver el resumen de datos personales en la conversación (correo en los commits, usuario de Windows en rutas de `docs\` y `scripts\`).
