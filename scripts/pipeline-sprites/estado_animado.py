@@ -19,7 +19,7 @@ RAIZ = Path(__file__).resolve().parents[2]
 # archivo de datos, nombre de la constante y de qué estado del mod se toma la comparación.
 ESTADOS = {
     'nueva': dict(entrada='Emi-Animacion-Conversacion_Nueva', patron='frame-0*.png', fondo='alfa', salida='conversacion-nueva', ts='conversacion.ts', const='CONV', titulo='Conversación nueva'),
-    'pensando': dict(entrada='Emi-Animacion-pensando', patron='*.png', fondo='negro', salida='pensando', ts='pensando.ts', const='PENS', titulo='Pensando'),
+    'pensando': dict(entrada='EMI CLAUDE PENSANDO', patron='*.png', fondo='alfa', salida='pensando', ts='pensando.ts', const='PENS', titulo='Pensando'),
     'hula': dict(entrada='Emi-Animacion-pensando-de-guardia-hula', patron='*.png', fondo='alfa', salida='hula', ts='hula.ts', const='HULA', titulo='De guardia: hula'),
 }
 ESTADO = sys.argv[1] if len(sys.argv) > 1 else 'nueva'

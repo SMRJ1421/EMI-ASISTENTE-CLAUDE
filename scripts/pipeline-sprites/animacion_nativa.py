@@ -14,8 +14,14 @@ from PIL import Image
 
 RAIZ = Path(__file__).resolve().parents[2]
 ESTADOS = {
-    'escribiendo': dict(entrada='animacion-emi-escribiendo-comandos', patron='*-frame-*.png', ts='escribiendo.ts', const='ESCR', titulo='Escribiendo / comandos', modo='nativa'),
-    'pensando': dict(entrada='EMI-PENSANDO', patron='*.png', ts='pensando.ts', const='PENS', titulo='Pensando', modo='ilustrada'),
+    'escribiendo': dict(entrada='EMI-CLAUDE-ESCRIBIENDO-COMANDOS', patron='*.png', ts='escribiendo.ts', const='ESCR', titulo='Escribiendo / comandos', modo='ilustrada'),
+    'hula': dict(entrada='EMI-CLAUDE-DE-GUARDIA', patron='*.png', ts='hula.ts', const='HULA', titulo='De guardia', modo='ilustrada'),
+    'responde': dict(entrada='EMI-CALUDE-TE-RESPONDE', patron='*.png', ts='responde.ts', const='RESP', titulo='Te responde', modo='ilustrada'),
+    'leyendo': dict(entrada='EMI-CLAUDE-LEYENDO', patron='*.png', ts='leyendo.ts', const='LEER', titulo='Leyendo', modo='ilustrada'),
+    'terminado': dict(entrada='EMI_CLAUDE_TERMINADO', patron='*.png', ts='terminado.ts', const='TERM', titulo='Terminado', modo='ilustrada'),
+    'duerme': dict(entrada='EMI-CLAUDE-DUERME', patron='*.png', ts='duerme.ts', const='DUER', titulo='Duerme', modo='ilustrada'),
+    'necesita': dict(entrada='EMI-CLAUDE-NECESITA', patron='*.png', ts='necesita.ts', const='NECE', titulo='Necesita', modo='ilustrada'),
+    'pensando': dict(entrada='EMI CLAUDE PENSANDO', patron='*.png', ts='pensando.ts', const='PENS', titulo='Pensando', modo='ilustrada'),
 }
 ESTADO = sys.argv[1] if len(sys.argv) > 1 else 'escribiendo'
 CFG = ESTADOS[ESTADO]
@@ -35,7 +41,8 @@ if CFG['modo'] == 'nativa':
 def reducir(f: np.ndarray, caja: tuple, alto_fig: int, lienzo: int) -> np.ndarray:
     """Recorta `caja` (la misma para todos los fotogramas), la reduce con Lanczos a `alto_fig` de alto y la deja abajo y centrada en `lienzo` x `lienzo`."""
     x0, y0, x1, y1 = caja
-    ancho_fig = round((x1 - x0) * alto_fig / (y1 - y0))
+    escala = min(alto_fig / (y1 - y0), (lienzo - 2) / (x1 - x0))  # cabe en alto y en ancho (las escenas anchas, como escribiendo, mandan por el ancho)
+    ancho_fig, alto_fig = round((x1 - x0) * escala), round((y1 - y0) * escala)
     a = f[y0:y1, x0:x1].astype(float)
     a[..., :3] *= a[..., 3:4] / 255  # color premultiplicado: el borde no sangra el color del fondo
     r = np.array(Image.fromarray(a.astype(np.uint8), 'RGBA').resize((ancho_fig, alto_fig), Image.LANCZOS)).astype(float)

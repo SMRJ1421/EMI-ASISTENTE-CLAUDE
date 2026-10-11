@@ -2,7 +2,7 @@ import { describe, expect, mock, test } from 'claude-code/testing'
 
 import { esFalloReal, esRechazo, RECHAZO } from '../hooks/deteccion'
 import { ESPECIAL } from '../hooks/animaciones'
-import { celdas, colorDe, descomprimir, dibujoSvg, elegirTam, especialEnBanda, especialQueCabe, filasDe, fotograma, fotogramaEn, fotogramas, indice, leerCeldas, medidas, ORDEN, planPanel, TARJETA } from '../hooks/dibujo'
+import { celdas, PASO_MS, colorDe, descomprimir, dibujoSvg, elegirTam, especialEnBanda, especialQueCabe, filasDe, fotograma, fotogramaEn, fotogramas, indice, leerCeldas, medidas, ORDEN, planPanel, TARJETA } from '../hooks/dibujo'
 import { ESTADOS, FRASES, detalleDe, estadoDeHerramienta } from '../hooks/estados'
 import { ALFABETO, TAMANOS } from '../hooks/sprites'
 
@@ -63,11 +63,11 @@ describe('los datos de los sprites', () => {
     }
   })
 
-  test('el fotograma avanza con el tic, más despacio en los estados tranquilos', () => {
+  test('el fotograma avanza un paso por tic en todos los estados (4 fps)', () => {
     expect(indice('escribiendo', 0, 4)).toBe(0)
     expect(indice('escribiendo', 1, 4)).toBe(1)
-    expect(indice('duerme', 1, 4)).toBe(0)
-    expect(indice('duerme', 2, 4)).toBe(1)
+    expect(indice('duerme', 1, 4)).toBe(1)
+    expect(indice('duerme', 2, 4)).toBe(2)
     expect(fotograma('baile', 'L', 0).join('/')).not.toBe(fotograma('baile', 'L', 1).join('/'))
   })
 })
@@ -421,32 +421,32 @@ describe('celdas Raster: espacio con fondo cuando las dos mitades son iguales', 
   })
 })
 
-describe('hula (de guardia) con 5 fotogramas a 4 fps sobre la tarjeta lila', () => {
-  test('la hoja tiene 5 fotogramas distintos y posa sobre la tarjeta (arte con contorno negro)', () => {
-    expect(ESPECIAL['hula']).toEqual({ tam: 'H5', chico: 'H5S', fps: 4, tarjeta: true })
+describe('hula (de guardia) con 8 fotogramas con 5 fps, sin tarjeta', () => {
+  test('la hoja tiene 8 fotogramas distintos y deja ver el fondo (arte naranja de guardia)', () => {
+    expect(ESPECIAL['hula']).toEqual({ tam: 'H5', chico: 'H5S', tarjeta: false })
     expect(medidas('H5')).toEqual({ ancho: 60, alto: 60, filas: 30 })
     expect(medidas('H5S')).toEqual({ ancho: 28, alto: 28, filas: 14 })
     const vistos = new Set<string>()
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < 8; i += 1) {
       const filas = filasDe('hula', 'H5', i)
       expect(filas.length).toBe(60)
       expect(filas.every(f => f.length === 60)).toBe(true)
       vistos.add(filas.join('/'))
     }
-    expect(vistos.size).toBe(5)
-    // Sobre la tarjeta: ninguna celda usa el color por defecto del terminal y el SVG lleva el recuadro.
+    expect(vistos.size).toBe(8)
+    // Sin tarjeta: la primera celda (vacía) usa el color por defecto del terminal y el SVG no lleva recuadro.
     const c = celdas('H5', filasDe('hula', 'H5', 0))
     const bytes = (Uint8Array as unknown as { fromBase64: (s: string) => Uint8Array }).fromBase64(c.cells)
     const w = new Uint32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 4)
-    expect(w[2]).toBe(TARJETA)
-    expect(dibujoSvg('H5', filasDe('hula', 'H5', 0)).source).toContain('<rect')
+    expect(w[2]).toBe(0x01000000)
+    expect(dibujoSvg('H5', filasDe('hula', 'H5', 0)).source).not.toContain('<rect')
   })
 
-  test('el fotograma avanza a 4 fps', () => {
+  test('el fotograma cambia cada 200 ms y el ciclo de 8 dura 1,6 s', () => {
     const f = (ms: number) => fotogramaEn('hula', 'H5', ms).join('/')
-    expect(f(249)).toBe(f(0))
-    expect(f(250)).toBe(filasDe('hula', 'H5', 1).join('/'))
-    expect(f(1250)).toBe(f(0))
+    expect(f(199)).toBe(f(0))
+    expect(f(200)).toBe(filasDe('hula', 'H5', 1).join('/'))
+    expect(f(1600)).toBe(f(0))
   })
 })
 
@@ -480,25 +480,137 @@ describe('sonido al terminar', () => {
   })
 })
 
-describe('escribiendo / comandos con 5 fotogramas a 5 fps', () => {
-  test('la hoja tiene 5 fotogramas distintos de 60x60 sobre la tarjeta, y avanza uno cada 200 ms', () => {
-    expect(ESPECIAL['escribiendo']).toEqual({ tam: 'E5', chico: 'E5S', fps: 5, tarjeta: true })
+describe('escribiendo / comandos con 8 fotogramas con 5 fps', () => {
+  test('la hoja tiene 8 fotogramas distintos de 60x60 sin tarjeta, y avanza uno cada 200 ms', () => {
+    expect(ESPECIAL['escribiendo']).toEqual({ tam: 'E5', chico: 'E5S', tarjeta: false })
     expect(medidas('E5')).toEqual({ ancho: 60, alto: 60, filas: 30 })
     expect(medidas('E5S')).toEqual({ ancho: 28, alto: 28, filas: 14 })
     const vistos = new Set<string>()
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < 8; i += 1) {
       const filas = filasDe('escribiendo', 'E5', i)
       expect(filas.length).toBe(60)
       expect(filas.every(f => f.length === 60)).toBe(true)
       vistos.add(filas.join('/'))
     }
-    expect(vistos.size).toBe(5)
+    expect(vistos.size).toBe(8)
     const f = (ms: number) => fotogramaEn('escribiendo', 'E5', ms).join('/')
     expect(f(199)).toBe(f(0))
     expect(f(200)).toBe(filasDe('escribiendo', 'E5', 1).join('/'))
-    expect(f(1000)).toBe(f(0))
+    expect(f(1600)).toBe(f(0))
     expect(especialQueCabe('escribiendo', 34, 60)).toBe('E5')
     expect(especialEnBanda('escribiendo', 14, 151)).toBe('E5S')
+  })
+})
+
+describe('terminado con 8 fotogramas con 5 fps (60x60)', () => {
+  test('la hoja tiene 8 fotogramas distintos, en el panel, la banda alta y la banda de 14 filas', () => {
+    expect(ESPECIAL['terminado']).toEqual({ tam: 'T5', chico: 'T5S', tarjeta: false })
+    expect(medidas('T5')).toEqual({ ancho: 60, alto: 60, filas: 30 })
+    expect(medidas('T5S')).toEqual({ ancho: 28, alto: 28, filas: 14 })
+    const vistos = new Set<string>()
+    for (let i = 0; i < 8; i += 1) {
+      const filas = filasDe('terminado', 'T5', i)
+      expect(filas.length).toBe(60)
+      expect(filas.every(f => f.length === 60)).toBe(true)
+      vistos.add(filas.join('/'))
+    }
+    expect(vistos.size).toBe(8)
+    expect(fotogramaEn('terminado', 'T5', 1600).join('/')).toBe(fotogramaEn('terminado', 'T5', 0).join('/'))
+    expect(especialQueCabe('terminado', 34, 60)).toBe('T5')
+    expect(especialEnBanda('terminado', 14, 151)).toBe('T5S')
+  })
+})
+
+describe('responde (te responde) con 8 fotogramas con 5 fps (60x60)', () => {
+  test('la hoja tiene 8 fotogramas distintos y se usa en el panel y en las bandas', () => {
+    expect(ESPECIAL['responde']).toEqual({ tam: 'R5', chico: 'R5S', tarjeta: false })
+    expect(medidas('R5')).toEqual({ ancho: 60, alto: 60, filas: 30 })
+    expect(medidas('R5S')).toEqual({ ancho: 28, alto: 28, filas: 14 })
+    const vistos = new Set<string>()
+    for (let i = 0; i < 8; i += 1) {
+      const filas = filasDe('responde', 'R5', i)
+      expect(filas.length).toBe(60)
+      expect(filas.every(f => f.length === 60)).toBe(true)
+      vistos.add(filas.join('/'))
+    }
+    expect(vistos.size).toBe(8)
+    expect(fotogramaEn('responde', 'R5', 1600).join('/')).toBe(fotogramaEn('responde', 'R5', 0).join('/'))
+    expect(especialQueCabe('responde', 34, 60)).toBe('R5')
+    expect(especialEnBanda('responde', 14, 151)).toBe('R5S')
+  })
+})
+
+describe('leyendo con 8 fotogramas con 5 fps (60x60)', () => {
+  test('la hoja tiene 8 fotogramas distintos y se usa en el panel y en las bandas', () => {
+    expect(ESPECIAL['leyendo']).toEqual({ tam: 'L5', chico: 'L5S', tarjeta: false })
+    expect(medidas('L5')).toEqual({ ancho: 60, alto: 60, filas: 30 })
+    expect(medidas('L5S')).toEqual({ ancho: 28, alto: 28, filas: 14 })
+    const vistos = new Set<string>()
+    for (let i = 0; i < 8; i += 1) {
+      const filas = filasDe('leyendo', 'L5', i)
+      expect(filas.length).toBe(60)
+      expect(filas.every(f => f.length === 60)).toBe(true)
+      vistos.add(filas.join('/'))
+    }
+    expect(vistos.size).toBe(8)
+    expect(fotogramaEn('leyendo', 'L5', 200).join('/')).toBe(filasDe('leyendo', 'L5', 1).join('/'))
+    expect(fotogramaEn('leyendo', 'L5', 1600).join('/')).toBe(fotogramaEn('leyendo', 'L5', 0).join('/'))
+    expect(especialQueCabe('leyendo', 34, 60)).toBe('L5')
+    expect(especialEnBanda('leyendo', 14, 151)).toBe('L5S')
+  })
+})
+
+describe('necesita con 8 fotogramas con 5 fps (60x60)', () => {
+  test('la hoja tiene 8 fotogramas distintos y se usa en el panel y en las bandas', () => {
+    expect(ESPECIAL['necesita']).toEqual({ tam: 'N5', chico: 'N5S', tarjeta: false })
+    expect(medidas('N5')).toEqual({ ancho: 60, alto: 60, filas: 30 })
+    expect(medidas('N5S')).toEqual({ ancho: 28, alto: 28, filas: 14 })
+    const vistos = new Set<string>()
+    for (let i = 0; i < 8; i += 1) {
+      const filas = filasDe('necesita', 'N5', i)
+      expect(filas.length).toBe(60)
+      expect(filas.every(f => f.length === 60)).toBe(true)
+      vistos.add(filas.join('/'))
+    }
+    expect(vistos.size).toBe(8)
+    expect(fotogramaEn('necesita', 'N5', 200).join('/')).toBe(filasDe('necesita', 'N5', 1).join('/'))
+    expect(fotogramaEn('necesita', 'N5', 1600).join('/')).toBe(fotogramaEn('necesita', 'N5', 0).join('/'))
+    expect(especialQueCabe('necesita', 34, 60)).toBe('N5')
+    expect(especialEnBanda('necesita', 14, 151)).toBe('N5S')
+  })
+})
+
+describe('duerme con 8 fotogramas con 5 fps (60x60)', () => {
+  test('la hoja tiene 8 fotogramas distintos y se usa en el panel y en las bandas', () => {
+    expect(ESPECIAL['duerme']).toEqual({ tam: 'D5', chico: 'D5S', tarjeta: false })
+    expect(medidas('D5')).toEqual({ ancho: 60, alto: 60, filas: 30 })
+    expect(medidas('D5S')).toEqual({ ancho: 28, alto: 28, filas: 14 })
+    const vistos = new Set<string>()
+    for (let i = 0; i < 8; i += 1) {
+      const filas = filasDe('duerme', 'D5', i)
+      expect(filas.length).toBe(60)
+      expect(filas.every(f => f.length === 60)).toBe(true)
+      vistos.add(filas.join('/'))
+    }
+    expect(vistos.size).toBe(8)
+    expect(fotogramaEn('duerme', 'D5', 200).join('/')).toBe(filasDe('duerme', 'D5', 1).join('/'))
+    expect(fotogramaEn('duerme', 'D5', 1600).join('/')).toBe(fotogramaEn('duerme', 'D5', 0).join('/'))
+    expect(especialQueCabe('duerme', 34, 60)).toBe('D5')
+    expect(especialEnBanda('duerme', 14, 151)).toBe('D5S')
+  })
+})
+
+describe('5 fps en todos los estados', () => {
+  test('cada dibujo dura 200 ms; el ciclo es de 1,6 s con 8 fotogramas y de 0,8 s con 4', () => {
+    expect(PASO_MS).toBe(200)
+    for (const [estado, tam, n] of [['pensando', 'A5', 8], ['hula', 'H5', 8], ['para', 'L', 4], ['falla', 'M', 4], ['nueva', 'XL', 4]] as const) {
+      expect(fotogramas(estado, tam).length).toBe(n)
+      for (let i = 0; i < n; i += 1) {
+        expect(fotogramaEn(estado, tam, i * PASO_MS).join('/')).toBe(filasDe(estado, tam, i).join('/'))
+        expect(fotogramaEn(estado, tam, i * PASO_MS + PASO_MS - 1).join('/')).toBe(filasDe(estado, tam, i).join('/'))
+      }
+      expect(fotogramaEn(estado, tam, n * PASO_MS).join('/')).toBe(filasDe(estado, tam, 0).join('/'))
+    }
   })
 })
 
@@ -514,9 +626,9 @@ describe('Emi en el escritorio (programa aparte)', () => {
   })
 })
 
-describe('pensando con 8 fotogramas a 5 fps (60x60)', () => {
+describe('pensando con 8 fotogramas con 5 fps (60x60)', () => {
   test('la hoja tiene 8 fotogramas distintos, rectangulares y con colores válidos', () => {
-    expect(ESPECIAL['pensando']).toEqual({ tam: 'A5', chico: 'A5S', fps: 5, tarjeta: false })
+    expect(ESPECIAL['pensando']).toEqual({ tam: 'A5', chico: 'A5S', tarjeta: false })
     expect(medidas('A5')).toEqual({ ancho: 60, alto: 60, filas: 30 })
     const vistos = new Set<string>()
     for (let i = 0; i < 8; i += 1) {
@@ -546,7 +658,7 @@ describe('pensando con 8 fotogramas a 5 fps (60x60)', () => {
     expect(especialQueCabe('pensando', 33, 62)).toBeNull()
     expect(especialQueCabe('pensando', 38, 59)).toBeNull()
     expect(especialQueCabe('hula', 52, 80)).toBe('H5')
-    expect(especialQueCabe('responde', 52, 80)).toBeNull()
+    expect(especialQueCabe('falla', 52, 80)).toBeNull()
     expect(especialQueCabe('nueva', 52, 80)).toBeNull()
   })
 
@@ -614,7 +726,7 @@ describe('pensando con 8 fotogramas a 5 fps (60x60)', () => {
     expect(especialEnBanda('pensando', 14, 40)).toBeNull()
     expect(especialEnBanda('hula', 40, 140)).toBe('H5')
     expect(especialEnBanda('hula', 14, 151)).toBe('H5S')
-    expect(especialEnBanda('responde', 40, 140)).toBeNull()
+    expect(especialEnBanda('falla', 40, 140)).toBeNull()
     expect(medidas('A5S')).toEqual({ ancho: 28, alto: 28, filas: 14 })
     for (let i = 0; i < 5; i += 1) {
       const filas = filasDe('pensando', 'A5S', i)

@@ -184,3 +184,146 @@ egister.tsx` (`publicar` con estado, `lanzarEscritorio`, comandos), `tests\masco
 **Verificación:** mod 49/49, laboratorio 21/21, tsc y validate limpios. **No visto aún en pantalla real.** Riesgo de estilo: es la única animación que no es pixel art, junto a las demás se verá distinta (más suave y de otro diseño).
 **Copias:** `respaldos\EMI-PENSANDO-originales\` (SHA-256), `respaldos\mascota-2026-10-09-antes-de-pensando-ilustrado\`, `respaldos\pensando-lab-antes-ilustrado.ts`.
 **GitHub:** este cambio está solo en commit local; no se ha subido (el usuario no lo pidió).
+
+## 17. «Pensando» con `arte\EMI CLAUDE PENSANDO` (8 fotogramas, 5 fps) — reemplaza §16
+**Pedido:** usar `arte\EMI CLAUDE PENSANDO` (1.png a 8.png) para «pensando».
+**Lo que traía:** 8 PNG de 1254x1254 con transparencia, **pixel art de verdad** (cuadrícula ~18 x 19,6 px, unas 64 celdas) pero con un **personaje distinto**: pelo naranja con coletas, ojos rojos, vestido rojo y un globo de pensamiento «...». Parece «Emi en los colores de Claude» (naranja); no es la Emi lila. El personaje ocupa casi todo el lienzo (~64 celdas de ancho): un recorte de 60 celdas lo cortaría.
+**Cómo se convirtió:** modo `ilustrada` de `animacion_nativa.py` (caja común, reducción Lanczos con color premultiplicado, 88 colores con 10 plazas de refuerzo). Se probó contra el vecino más cercano y éste salía ruidoso (se perdían la cara y el globo); Lanczos conserva cara, globo y pelo. Error de color ~15; nat28 para la banda del terminal ~14.
+**Fps:** no se indicó; **5 fps** (como antes). Con 8 fotogramas el ciclo dura 1,6 s. **Fondo transparente** (el usuario lo pidió así para «pensando»); el arte lleva contorno rojo oscuro, no negro: sobre un terminal muy oscuro el contorno se nota menos.
+**Dónde:** panel y banda del terminal (28x28 en las 14 filas), banda y panel de escritorio, Emi escritorio (regenerada; «pensando» a x1: ocupa 59x58 de arte). Pruebas: mod 49/49, laboratorio 21/21, tsc y validate limpios.
+**Riesgo de estilo:** mezcla en la misma Emi un «pensando» naranja con los demás estados lilas. Si no es intencional, conviene que el resto de estados también tenga la versión Claude.
+**Copias:** `respaldos\EMI-CLAUDE-PENSANDO-originales\` (SHA-256), `respaldos\mascota-2026-10-09-antes-de-emi-claude-pensando\`, `respaldos\pensando-lab-antes-emi-claude.ts`. Sin cambios en Git (el usuario pidió no tocarlo por ahora).
+
+## 18. Emi escritorio con las imágenes originales de 1254x1254
+**Pedido:** que el mod use las imágenes de 1254 px en vez de las de 60 px. **Alcance acordado (con el usuario):** solo **Emi escritorio**, con los originales sin reducir guardados en el mod. El terminal (celdas, tope 60x60 en el panel, 28x28 en la banda) no puede mostrar 1254 px; la app de escritorio de Claude (SVG, máx. 131 072 caracteres) no se tocó.
+**Qué estados:** los que tienen original grande: **pensando** (`EMI CLAUDE PENSANDO`, 8) y **hula** (`Emi-Animacion-pensando-de-guardia-hula`, 5). Los demás siguen con su dibujo pequeño de `frames\` (más adelante, al llegar sus originales, se añaden en `HD` de `exportar_frames.py`).
+**Cómo:** `exportar_frames.py` copia los PNG originales **tal cual** a `mod\escritorio\hd\<estado>_<n>.png` (12 MB en total). `emi_escritorio.pyw` los lee con Tk y los reduce por saltos (`subsample`: tamaño Pequeña 1/7 = 179 px, Mediana 1/5 = 251 px, Grande 1/3 = 418 px); como el arte tiene celdas de ~18 px, los bloques quedan íntegros y no hace falta Pillow. La ventana se adapta al tamaño mayor y Emi apoya los pies abajo y centrada. Los estados sin original usan el zoom entero de antes.
+**Rendimiento:** cada PNG grande tarda ~0,5 s en leerse; se precargan uno cada 200 ms al arrancar (un tramo con tirones al inicio) y la versión reducida se guarda en `~\.claude\mascota\cache_hd\` (clave: estado, fotograma, tamaño y peso del archivo), así que el siguiente arranque casi no tarda. Un PNG ilegible hace que ese estado vuelva a su dibujo pequeño.
+**Efecto en el tamaño:** «hula» y «pensando» ahora miden ~250 px de ventana en Mediana (antes 144x192 px); «pensando» deja de verse chica.
+**Verificación:** `prueba_humo.py` ampliado (carga el PNG de 1254, comprueba 251 px en Mediana y 418 en Grande, caché); `claude plugin test mod` 49/49; validate limpio. **No visto aún en pantalla real.**
+**Peso:** el mod pasa a pesar ~12 MB más (afecta a la instalación desde GitHub). Sin cambios en Git (el usuario pidió no tocarlo por ahora).
+
+### 18b. Partículas moradas alrededor de Emi escritorio (corregido)
+**Síntoma:** puntos moradas alrededor de la Emi naranja de «pensando» en Emi escritorio.
+**Causa:** los PNG originales traen alfa parcial en casi todos los píxeles (251-254 en el cuerpo, y ~30 000 píxeles por fotograma con alfa <128 alrededor: motas y bordes suaves). Tk los mezcla con el color transparente de la ventana (`#fe00fe`, magenta) y esos píxeles ya no son exactamente la clave, así que se ven como puntos morados.
+**Arreglo:** `exportar_frames.py` ahora guarda las copias de `hd\` con **alfa de todo o nada** (>=128 opaco), mismos colores y tamaño (1254x1254); los fotogramas pasaron de 12 MB a ~9,7 MB. Se borró la caché `~\.claude\mascota\cache_hd` (se rehace sola) y se reinició Emi escritorio.
+**Nota:** el arte original de `arte\` no se tocó; la limpieza es solo en la copia del mod. Si llega un estado nuevo con originales grandes, `exportar_frames.py` aplica la misma limpieza.
+
+## 19. «Terminado» con `arte\EMI_CLAUDE_TERMINADO` (8 fotogramas, 5 fps)
+**Pedido:** usar `arte\EMI_CLAUDE_TERMINADO` para el estado «terminado» (el que sale cuando Claude acaba una respuesta; «baile» es el de los encargos largos y no se tocó).
+**Lo que traía:** 8 PNG de 1254x1254 con transparencia (~52 %), pixel art del **mismo personaje naranja de «pensando»** (Emi en colores de Claude) con confeti de colores, cara feliz de ojos cerrados y brazos arriba. Todos distintos.
+**Cómo:** igual que «pensando» (§17): modo `ilustrada` de `animacion_nativa.py` (caja común, Lanczos, 88 colores con 10 plazas de refuerzo: los verdes, azules y amarillos del confeti se conservan). Error de color ~17,5 (el más alto, por la variedad de colores del confeti). Hojas `T5` (60x60) y `T5S` (28x28 para la banda del terminal), 5 fps, **fondo transparente** (como «pensando»); se pueden cambiar en `animaciones_mod.py`.
+**Dónde:** panel y banda del terminal, banda y panel de escritorio, y **Emi escritorio con los originales de 1254x1254** (copiados y con alfa limpio en `mod\escritorio\hd\terminado_N.png`; 5 fps). Laboratorio: `/emiconv terminado nat60|nat28`.
+**Peso:** `hd\` pasa de 9,7 MB a ~19 MB; el mod pesa más al instalarlo desde GitHub.
+**Verificación:** mod 50/50 (prueba nueva), laboratorio 21/21, tsc y validate limpios, `prueba_humo.py` pasa. **No visto aún en pantalla real.**
+**Riesgo de estilo:** «pensando» y «terminado» son naranjas; «hula», «escribiendo» y el resto, lilas.
+**Copias:** `respaldos\EMI_CLAUDE_TERMINADO-originales\` (SHA-256), `respaldos\mascota-2026-10-10-antes-de-terminado\`. Sin cambios en Git (el usuario pidió no tocarlo por ahora).
+
+## 20. Globo de mensaje junto a Emi escritorio
+**Pedido:** un cuadro de mensaje al lado de Emi escritorio con lo que se está haciendo.
+**Qué muestra:** la frase del estado (p. ej. «cavilando…») en negrita y debajo el detalle de la herramienta que Claude usa (p. ej. `Edit register.tsx`, `Bash «git status»`; el mod ya recorta el texto). Solo en estados activos (pensando, responde, leyendo, escribiendo, te necesita, falla, para, terminado, baile); en reposo (hula, duerme) no aparece.
+**Cómo:** el mod publica `frase` y `detalle` en el archivo de sesión (`publicar` en `register.tsx`, en cada cambio de estado). `emi_escritorio.pyw` abre un `Toplevel` aparte, opaco y siempre encima, que se coloca a la izquierda de Emi (a la derecha si no hay sitio) a un tercio de su altura y la sigue al arrastrarla. Es opaco para que el texto suavizado no se mezcle con el color transparente de la ventana. Con un mod anterior (sin `frase`) usa una frase corta por estado.
+**Control:** clic derecho en Emi escritorio → «Mensaje junto a Emi» (se guarda en `escritorio.json`).
+**Privacidad:** el detalle puede mostrar nombres de archivos y comandos en pantalla; si compartes pantalla, desactiva el mensaje.
+**Verificación:** `prueba_humo.py` (globo aparece con el detalle, se esconde en reposo y con la opción apagada); mod 50/50, tsc y validate limpios. **No visto aún en pantalla real**; el mod cargado en sesiones ya abiertas publica el texto completo solo tras recargarlo. Sin cambios en Git.
+
+## 21. «Escribiendo / comandos» con `arte\EMI-CLAUDE-ESCRIBIENDO-COMANDOS` (8 fotogramas, 5 fps) — reemplaza §14
+**Pedido:** actualizar «escribiendo comandos» con la carpeta nueva. **Lo que traía:** 8 PNG de 1254x1254, pixel art con transparencia, la **Emi naranja** (Claude) sentada escribiendo en una terminal verde con `>_`; parpadeo, guiño, chispas. Reemplaza la versión lila de 5 fotogramas (§14, 60x60 nativos), que sigue en `arte\animacion-emi-escribiendo-comandos\` y en `respaldos\`.
+**Cómo:** modo `ilustrada` (Lanczos, caja común, 88 colores con refuerzo); error de color ~16. Hojas `E5`/`E5S`, 5 fps, **sin tarjeta** (transparente, igual que pensando y terminado; antes estaba sobre la tarjeta lila). Emi escritorio con los originales de 1254x1254 (alfa limpio) en `hd\escribiendo_N.png`.
+**Arreglo de paso en `animacion_nativa.py`:** `reducir()` solo respetaba el alto y las escenas anchas (esta mide ~1100x930) se salían del lienzo de 60; ahora cabe en alto **y** ancho. Se regeneraron «pensando» y «terminado» con esa corrección (el «pensando» era un poco más ancho que el lienzo y se recortaba).
+**Peso:** `hd\` pasa a ~26 MB (pensando, hula, terminado, escribiendo).
+**Verificación:** mod 50/50 (prueba de escribiendo actualizada a 8 fotogramas y sin tarjeta), laboratorio 21/21, tsc, validate y `prueba_humo.py` limpios. **No visto aún en pantalla real.** Sin cambios en Git.
+**Copias:** `respaldos\EMI-CLAUDE-ESCRIBIENDO-COMANDOS-originales\` (SHA-256), `respaldos\mascota-2026-10-10-antes-de-escribiendo-claude\`, `respaldos\escribiendo-lab-antes-claude.ts`.
+**Estado de estilo:** naranja (Claude): pensando, escribiendo, terminado. Lila: hula, el resto.
+
+### 20b. El globo usa la frase y el color del estado
+La **frase de estado** (p. ej. «picando código…», de `FRASES` en `estados.ts`) es la primera línea del globo de Emi escritorio, igual que en Claude, y el **detalle** (herramienta, archivo o comando) la segunda. Ahora el mod publica también `color` (el de `COLORES[estado]`) y el globo pinta la frase con ese color un 30 % más oscuro para leerse sobre el fondo crema (el amarillo de «escribiendo» pasa a `#a98c35`). Con un mod anterior sin `frase`/`color`, el globo usa una frase corta genérica y el lila. Prueba en `prueba_humo.py`; mod 50/50.
+
+## 22. Estado de guardia («hula») con `arte\EMI-CLAUDE-DE-GUARDIA` (8 fotogramas, 4 fps) — reemplaza §12
+**Pedido:** actualizar el estado de guardia con la carpeta nueva. En el mod ese estado se llama `hula` («De guardia: hula» en la hoja original); `duerme` es el otro estado de guardia (a los 5 min sin actividad) y no se tocó.
+**Lo que traía:** 8 PNG de 1254x1254, pixel art con transparencia: la **Emi naranja** de pie, con las manos en el pecho, esperando y con un globo «algo más para hacer» (el texto del globo no se lee a 60x60; sí en los originales de Emi escritorio). Reemplaza la «hula» lila bailando con corona de flores (§12), que sigue en `arte\Emi-Animacion-pensando-de-guardia-hula\` y en `respaldos\`.
+**Cómo:** modo `ilustrada` (Lanczos, caja común, 88 colores con refuerzo; error ~15). Hojas `H5`/`H5S`, **4 fps** (la velocidad que ya tenía el estado; con 8 fotogramas el ciclo dura 2 s), **sin tarjeta** (transparente, como el resto de la serie naranja). Emi escritorio con los originales (alfa limpio) en `hd\hula_N.png`.
+**Peso:** `hd\` ~32 MB en total (pensando, hula, terminado, escribiendo).
+**Verificación:** mod 50/50 (pruebas de hula actualizadas: 8 fotogramas, sin tarjeta, ciclo de 2 s), laboratorio 21/21, tsc, validate y `prueba_humo.py` limpios. **No visto aún en pantalla real.** Sin cambios en Git.
+**Serie naranja (Claude):** pensando, escribiendo, terminado, hula. **Lila (original):** nueva, responde, leyendo, necesita, falla, para, baile, duerme.
+**Copias:** `respaldos\EMI-CLAUDE-DE-GUARDIA-originales\` (SHA-256), `respaldos\mascota-2026-10-10-antes-de-guardia-claude\`, `respaldos\hula-lab-antes-guardia-claude.ts`.
+
+## 23. Emi escritorio ya no «salta» al cambiar de estado
+**Síntoma (usuario):** dejaba a Emi escritorio en un punto (unos 6 px a la derecha, 20 px arriba de otro) y al cambiar de estado se movía.
+**Causa:** el programa no mueve la ventana; lo que cambiaba era dónde apoyaba los pies cada dibujo dentro del mismo lienzo de 1254x1254: los pies quedaban entre el 90 % (escribiendo) y el 96 % (pensando, terminado) de la altura, y el centro entre el 51 % y el 52 %. En la ventana Mediana (251 px) eso son hasta ~17 px de alto (~21 px con Windows al 125 %) y unos pocos de ancho.
+**Arreglo:** `exportar_frames.py` re-ancla cada estado al copiar los originales a `hd\`: la caja que envuelve todos los fotogramas del estado queda **centrada en x (627 px) y con los pies a 8 px del borde de abajo**. Se mueven todos los fotogramas del estado por igual: el movimiento propio de la animación se conserva. Medido tras el arreglo: centro x = 627-628 y pies y = 1246 en los 4 estados. Los estados sin original grande (dibujo pequeño) ya apoyaban los pies abajo y centrados. Se borró la caché `cache_hd` y se reinició Emi escritorio.
+**Lo que no cambia:** el **tamaño** de cada figura sigue siendo el del arte (pensando y terminado ocupan casi todo el lienzo; hula y escribiendo, menos), así que unos estados se ven más grandes que otros; es una decisión aparte (escala por estado).
+**Verificación:** `prueba_humo.py` limpio; no visto aún en pantalla real. Sin cambios en Git.
+
+## 24. «Te responde» (`responde`) con `arte\EMI-CALUDE-TE-RESPONDE` (8 fotogramas, 5 fps)
+**Pedido:** actualizar el estado «te responde» con la carpeta nueva (el nombre de la carpeta trae la errata «CALUDE»).
+**Lo que traía:** 8 PNG de 1254x1254, pixel art con transparencia: la **Emi naranja** hablando y saludando, con marcas de exclamación rojas, destellos, un guiño y gestos con las manos. No confundir con la carpeta antigua `arte\te-responde\` (sin procesar y sin usar).
+**Cómo:** igual que el resto de la serie naranja: modo `ilustrada` (error de color ~15), hojas `R5`/`R5S`, **5 fps**, sin tarjeta (transparente). Emi escritorio con los originales re-anclados (`hd\responde_N.png`: centro y pies a la misma línea que los demás estados). Laboratorio: `/emiconv responde nat60|nat28`.
+**Arreglo menor:** en Emi escritorio «escribiendo» iba a 4 fps (el mod a 5); ahora los estados `pensando`, `terminado`, `responde` y `escribiendo` van a 5 fps en los dos.
+**Verificación:** mod 51/51 (prueba nueva de responde; las pruebas de «no tiene hoja especial» pasaron de `responde` a `leyendo`), laboratorio 21/21, tsc, validate y `prueba_humo.py` limpios. **No visto aún en pantalla real.** Sin cambios en Git.
+**Serie naranja:** pensando, responde, escribiendo, terminado, hula. **Lila (original):** nueva, leyendo, necesita, falla, para, baile, duerme.
+**Copias:** `respaldos\EMI-CALUDE-TE-RESPONDE-originales\` (SHA-256), `respaldos\mascota-2026-10-10-antes-de-responde-claude\`.
+
+## 25. Se quita el «baile de fiesta» (`baile`)
+**Pedido:** que Emi ya no haga el estado de bailar con música.
+**Cambio (solo en `mod\hooks\register.tsx`):** al terminar una respuesta, Emi **siempre** pasa a «terminado» (antes pasaba a «baile» si el encargo duraba 2 minutos o más, o usaba 25 o más herramientas). Se quitó la constante `LARGO`. `/emi probar` enseña ahora 11 estados (sin «baile»).
+**Lo que no cambia:** el sonido de «listo» (cada vez) y el globo de Windows (solo en encargos de 30 s o más). El estado `baile` y su arte lila siguen existiendo en los datos (`estados.ts`, `sprites.ts`) por si se quiere recuperar: bastaría volver a la condición `largo ? 'baile' : 'terminado'`.
+**Verificación:** mod 51/51, tsc y validate limpios. Sin prueba específica del turno largo (necesita simular 2 minutos). **No visto aún en pantalla real.** Sin cambios en Git.
+
+## 26. Los 5 estados de 8 fotogramas a 8 fps
+**Pedido:** «¿puedes hacerlo de 8 fps?». **Alcance elegido:** los cinco estados con 8 fotogramas (pensando, responde, escribiendo, terminado, hula) pasan a **8 fps** (cada dibujo 125 ms; el ciclo dura 1 s). Los de 4 fotogramas (nueva, leyendo, duerme: 2 fps; necesita, falla, para: 4 fps) **no se tocaron**: a 8 fps un ciclo de 4 dibujos duraría 0,5 s.
+**Dónde:** `ESTADOS` de `animaciones_mod.py` (campo fps → `ESPECIAL` en `animaciones.ts`) para el mod, y `OCHO_FPS` en `emi_escritorio.pyw` para Emi escritorio. El reloj rápido del mod (`ajustarRapido`) corre ahora también durante «hula» (antes bastaba el latido de 250 ms): dos tics por fotograma (~63 ms), así que en reposo la Emi de Claude se redibuja unas 16 veces por segundo en lugar de 4.
+**Pruebas actualizadas:** fps y tiempos (125 ms por fotograma, ciclo de 1 s). Mod 51/51, tsc y validate limpios; `prueba_humo.py` limpio. **No visto aún en pantalla real.** Sin cambios en Git.
+**Si se nota pesado:** bajar «hula» a 5 fps en `ESTADOS` (la pasa de nuevo al latido normal si se pone ≤ 4).
+
+## 27. «Leyendo» con `arte\EMI-CLAUDE-LEYENDO` (8 fotogramas, 8 fps)
+**Pedido:** actualizar el estado «leyendo» con la carpeta nueva. **Lo que traía:** 8 PNG de 1254x1254, pixel art con transparencia: la **Emi naranja** leyendo tras una laptop gris, con destellos, un globo/etiqueta pequeña y un parpadeo. Reemplaza el «leyendo» lila original de 4 fotogramas.
+**Cómo:** como el resto de la serie naranja: modo `ilustrada` (error de color ~15; ~13 en la versión de la banda), hojas `L5`/`L5S`, **8 fps** (el valor vigente de la serie; antes «leyendo» iba a 2 fps), sin tarjeta, y en Emi escritorio los originales re-anclados (`hd\leyendo_N.png`) con `leyendo` añadido a `OCHO_FPS`. Laboratorio: `/emiconv leyendo nat60|nat28`.
+**Cuándo sale:** cuando Claude lee o busca (`Read`, `Grep`, `Glob`, `WebFetch`, `WebSearch`, `ToolSearch`…).
+**Verificación:** mod 52/52 (prueba nueva; las pruebas de «sin hoja especial» ahora usan `necesita`), laboratorio 21/21, tsc, validate y `prueba_humo.py` limpios. **No visto aún en pantalla real.** Sin cambios en Git.
+**Serie naranja (8 fotogramas, 8 fps):** pensando, responde, escribiendo, leyendo, terminado, hula. **Lila (original, 4 fotogramas):** nueva, necesita, falla, para, duerme; «baile» ya no se usa.
+**Copias:** `respaldos\EMI-CLAUDE-LEYENDO-originales\` (SHA-256), `respaldos\mascota-2026-10-10-antes-de-leyendo-claude\`.
+
+## 28. Los 6 estados de 8 fotogramas vuelven a **5 fps**
+**Pedido:** a 8 fps se veía muy rápido (§26). **Cambio:** pensando, responde, escribiendo, leyendo, terminado y hula van a **5 fps**: cada dibujo 200 ms, ciclo de 1,6 s. En `ESTADOS` de `animaciones_mod.py` (→ `ESPECIAL`) y `CINCO_FPS` de `emi_escritorio.pyw`. Con 5 fps «hula» (antes 4) vuelve a usar el reloj rápido de 150 ms de `ajustarRapido` (fps > 4). Pruebas actualizadas (mod 52/52), tsc y validate limpios; Emi escritorio reiniciada. **No visto aún en pantalla real.** Los de 4 fotogramas (nueva y duerme: 2 fps; necesita, falla y para: 4 fps) sin cambios. Sin cambios en Git.
+
+## 29. Todos los estados a **4 fps**
+**Pedido:** que todos los estados vayan a 4 fps (antes: los 6 estados de 8 fotogramas a 5 fps; nueva y duerme a 2 fps; necesita, falla y para a 4).
+**Cambio:** `ESTADOS` de `animaciones_mod.py` (→ `ESPECIAL`) a 4 para los 6 estados nuevos; `LENTOS` desaparece de `dibujo.ts` (`indice` avanza un fotograma por tic en todos, así nueva y duerme pasan de 2 a 4 fps); en `emi_escritorio.pyw` una sola constante `FPS = 4`. Como 4 fps coincide con el latido de 250 ms, ya no hace falta el reloj rápido (`ajustarRapido` no arranca con fps ≤ 4): menos redibujados que a 5 u 8 fps. Ciclo de 8 fotogramas: 2 s; de 4 fotogramas: 1 s.
+**Verificación:** mod 52/52 (pruebas de tiempos y de `indice` actualizadas), laboratorio 21/21, tsc y validate limpios, `prueba_humo.py` limpio; Emi escritorio reiniciada. **No visto aún en pantalla real.** Sin cambios en Git.
+
+## 30. Ciclo de **3 segundos** en todos los estados (reemplaza §29)
+**Pedido:** que todos los estados tengan 3 segundos de duración de un ciclo.
+**Resultado:** los estados de **8 fotogramas** cambian de dibujo cada **375 ms** (2,67 fps) y los de **4 fotogramas** cada **750 ms** (1,33 fps); el ciclo completo de cualquiera dura 3 s. Ya no hay un número de fps: es `CICLO_MS = 3000` en `mod\hooks\dibujo.ts`.
+**Cómo:** `fotogramaEn(estado, tam, ms)` (ahora válido para cualquier tamaño, no solo las hojas nuevas) calcula el fotograma desde el tiempo transcurrido; el panel, la banda del terminal y el SVG de escritorio lo usan para **todos** los estados (antes los de 4 fotogramas usaban el contador de tics). `animaciones_mod.py` y el tipo `ESPECIAL` perdieron el campo `fps`. En `emi_escritorio.pyw` la constante `CICLO_S = 3.0` sustituye a `FPS`.
+**Reloj extra:** 750 ms es múltiplo del latido de 250 ms, así que los de 4 fotogramas no necesitan nada más; 375 ms no lo es, así que mientras dura un estado de 8 fotogramas corre un reloj de **125 ms** (`ajustarRapido`; fijo, ya sin depender de fps). Como «hula» (de guardia) es de 8 fotogramas, en reposo la Emi de Claude se redibuja ~8 veces por segundo.
+**Verificación:** mod 53/53 (prueba nueva de ciclo para 8 y 4 fotogramas; las de tiempos actualizadas), laboratorio 21/21, tsc y validate limpios, `prueba_humo.py` (ciclo en Emi escritorio) limpio. **No visto aún en pantalla real.** Sin cambios en Git.
+**Tabla final:** pensando, responde, escribiendo, leyendo, terminado, hula: 8 fotogramas, 375 ms, ciclo 3 s. nueva, necesita, falla, para, duerme (y baile, sin uso): 4 fotogramas, 750 ms, ciclo 3 s.
+
+## 31. Ciclo de 2 s en todos los estados (2026-10-10)
+**Pedido:** que todos los estados completen su ciclo en 2 s (antes 3 s, §30). Con 8 fotogramas cada dibujo dura 250 ms (≈4 fps) y con 4 fotogramas 500 ms (2 fps); ambos múltiplos del latido de 250 ms.
+**Cambios:** `CICLO_MS = 2000` en `mod\hooks\dibujo.ts`; `CICLO_S = 2.0` en `mod\escritorio\emi_escritorio.pyw`; comentarios en `register.tsx` y `animaciones_mod.py`; pruebas (`mascota.test.ts`, `prueba_humo.py`) ajustadas a 250/500 ms y 2 s.
+**Copia previa:** `respaldos\ciclo-3s-antes-de-2s-2026-10-10\`.
+**Verificación:** mod 53/53, laboratorio 21/21, `prueba_humo.py` OK, validate pasa con avisos. No visto en pantalla. El reloj rápido de 125 ms (`ajustarRapido`) sigue activo en los estados de 8 fotogramas aunque ya no hace falta (250 ms = latido); quitarlo ahorraría redibujos, no se hizo sin pedirlo.
+
+## 32. 5 fps en todos los estados (2026-10-10)
+**Pedido:** que todos los estados vayan a 5 fps. Esto sustituye al ciclo fijo de 2 s (§31): ahora cada dibujo dura 200 ms, así que el ciclo es de **1,6 s con 8 fotogramas y 0,8 s con 4**.
+**Cambios:** `CICLO_MS` → `PASO_MS = 200` en `mod\hooks\dibujo.ts`; `CICLO_S` → `PASO_S = 0.2` en `emi_escritorio.pyw`; `ajustarRapido` en `register.tsx` ahora corre siempre un reloj de 100 ms (antes solo en estados con 8 fotogramas), porque 200 ms no coincide con el latido de 250 ms; pruebas ajustadas.
+**Copia previa:** `respaldos\ciclo-2s-antes-de-5fps-2026-10-10\`.
+**Verificación:** mod 53/53, laboratorio 21/21, `prueba_humo.py` OK. No visto en pantalla. Coste: ~10 redibujos/s en todos los estados (antes 4/s en los de 4 fotogramas).
+
+## 33. «Necesita» con arte nuevo (8 fotogramas, 5 fps) (2026-10-10)
+**Pedido:** actualizar «necesita» con `arte\EMI-CLAUDE-NECESITA` (1.png a 8.png, 1254x1254, transparencia real, ~47 % transparente, texto «¡TE NECESITO!» y contorno oscuro). 8 fotogramas distintos, ninguno idéntico.
+**Método:** modo `ilustrada` (Lanczos premultiplicado, escena ancha), sin tarjeta lila (fondo transparente, como las demás de la serie naranja). Error de color nat60 15,5 y nat28 14,1 (paleta de 88; el rojo/dorado del vestido y el pelo pierden matiz).
+**Dónde:** estado `necesita` añadido a `animacion_nativa.py`, `animaciones_mod.py` (hojas `N5`/`N5S`), `exportar_frames.py` (HD, para Emi escritorio), laboratorio (`necesita.ts`, `convdibujo.ts`, `/emiconv necesita`) y pruebas del mod (`necesita` ya no es el ejemplo de estado sin animación propia: pasó a `falla`; prueba nueva para `necesita`). Cubre los 5 lugares: panel y banda del terminal, panel y banda de escritorio y Emi escritorio.
+**Copias:** `respaldos\necesita-originales\` (con SHA-256) y `respaldos\mascota-2026-10-10-antes-de-necesita\`.
+**Verificación:** mod 54/54, laboratorio 21/21, tsc de ambos limpio, validate (mod y raíz) pasa con avisos, `prueba_humo.py` OK. Emi escritorio reiniciada y caché `cache_hd` borrada. **No visto en pantalla todavía.**
+**Pendiente de arte nuevo:** nueva, falla, para y duerme.
+
+## 34. «Duerme» con arte nuevo (8 fotogramas, 5 fps) (2026-10-10)
+**Pedido:** actualizar «duerme» con `arte\EMI-CLAUDE-DUERME` (1.png a 8.png, 1254x1254, transparencia real, contorno oscuro). Emi dormida de lado con «zzz» azules; 8 fotogramas distintos.
+**Método:** modo `ilustrada`, sin tarjeta lila. Error de color nat60 15,6 y nat28 12,1. La figura es baja y ancha: en el 60x60 ocupa la mitad inferior del lienzo y las «zzz» salen pequeñas.
+**Dónde:** `animacion_nativa.py`, `animaciones_mod.py` (hojas `D5`/`D5S`), `exportar_frames.py` (HD), laboratorio (`duerme.ts`, `convdibujo.ts`, `/emiconv duerme`) y pruebas del mod (el ejemplo de estado de 4 fotogramas pasó de `duerme` a `para`; prueba nueva para `duerme`). Los 5 lugares: panel y banda del terminal, panel y banda de escritorio y Emi escritorio.
+**Copias:** `respaldos\duerme-originales\` (SHA-256) y `respaldos\mascota-2026-10-10-antes-de-duerme\`.
+**Verificación:** mod 55/55, laboratorio 21/21, tsc limpio, validate (mod y raíz) con avisos, `prueba_humo.py` OK. Emi escritorio reiniciada, caché borrada. **No visto en pantalla.**
+**Pendiente de arte nuevo:** nueva, falla y para.

@@ -8,13 +8,18 @@ import json
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[2]
-# estado del mod -> (archivo del laboratorio, hoja grande, hoja chica, fps, ¿sobre la tarjeta lila?)
+# estado del mod -> (archivo del laboratorio, hoja grande, hoja chica, ¿sobre la tarjeta lila?). Todos los estados completan su ciclo a 5 fps (PASO_MS en dibujo.ts).
 # «tarjeta»: el arte con contorno negro posa sobre la tarjeta lila (como los demás estados); el que no lo trae (pensando) deja ver el fondo.
 # «nueva» (conversacion.ts, 8 fps) está lista en el laboratorio pero aún no se lleva al mod: añadirla aquí cuando se autorice.
 ESTADOS = {
-    'pensando': ('pensando.ts', 'A5', 'A5S', 5, False),
-    'hula': ('hula.ts', 'H5', 'H5S', 4, True),
-    'escribiendo': ('escribiendo.ts', 'E5', 'E5S', 5, True),
+    'pensando': ('pensando.ts', 'A5', 'A5S', False),
+    'hula': ('hula.ts', 'H5', 'H5S', False),
+    'escribiendo': ('escribiendo.ts', 'E5', 'E5S', False),
+    'terminado': ('terminado.ts', 'T5', 'T5S', False),
+    'responde': ('responde.ts', 'R5', 'R5S', False),
+    'leyendo': ('leyendo.ts', 'L5', 'L5S', False),
+    'necesita': ('necesita.ts', 'N5', 'N5S', False),
+    'duerme': ('duerme.ts', 'D5', 'D5S', False),
 }
 
 
@@ -25,11 +30,11 @@ def variante(archivo: str, nombre: str) -> dict:
 
 hojas = {}
 especial = {}
-for estado, (archivo, grande, chico, fps, tarjeta) in ESTADOS.items():
+for estado, (archivo, grande, chico, tarjeta) in ESTADOS.items():
     for tam, nombre in ((grande, 'nat60'), (chico, 'nat28')):
         v = variante(archivo, nombre)
         hojas[tam] = {'ancho': v['ancho'], 'alto': v['alto'], 'paleta': v['paleta'], 'estados': {estado: v['fotogramas']}}
-    especial[estado] = {'tam': grande, 'chico': chico, 'fps': fps, 'tarjeta': tarjeta}
+    especial[estado] = {'tam': grande, 'chico': chico, 'tarjeta': tarjeta}
 
 tipos = ' | '.join(f"'{t}'" for t in hojas)
 lineas = [
@@ -38,8 +43,8 @@ lineas = [
     "import type { Hoja } from './sprites'",
     '',
     f'export type TamAnim = {tipos}',
-    '// Qué estado usa qué hoja, a cuántos fotogramas por segundo avanza y si posa sobre la tarjeta lila (arte con contorno negro).',
-    'export const ESPECIAL: Record<string, { tam: TamAnim; chico: TamAnim; fps: number; tarjeta: boolean }> = ' + json.dumps(especial),
+    '// Qué estado usa qué hoja (grande y chica) y si posa sobre la tarjeta lila (arte con contorno negro).',
+    'export const ESPECIAL: Record<string, { tam: TamAnim; chico: TamAnim; tarjeta: boolean }> = ' + json.dumps(especial),
     'export const ANIM: Record<TamAnim, Hoja> = ' + json.dumps(hojas, ensure_ascii=False, indent=1),
 ]
 (RAIZ / 'mod' / 'hooks' / 'animaciones.ts').write_text('\n'.join(lineas) + '\n', encoding='utf-8')

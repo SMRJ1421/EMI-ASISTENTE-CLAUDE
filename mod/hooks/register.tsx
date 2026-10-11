@@ -4,7 +4,7 @@ import type { EngineInterface, Register, RenderElement, Timer } from 'claude-cod
 import type { MascotaAjustes, MascotaAnimo, MascotaEstado, MascotaTamano } from '../types'
 import { esFalloReal, esRechazo } from './deteccion'
 import { ESPECIAL } from './animaciones'
-import { celdas, dibujoSvg, elegirTam, especialEnBanda, especialQueCabe, fotograma, fotogramaEn, medidas, planPanel, TEXTO_COLUMNAS, TEXTO_FILAS } from './dibujo'
+import { celdas, dibujoSvg, elegirTam, especialEnBanda, especialQueCabe, fotogramaEn, medidas, planPanel, TEXTO_COLUMNAS, TEXTO_FILAS } from './dibujo'
 import type { Tam } from './sprites'
 import { CARAS, COLORES, DURACION, ESTADOS, NOMBRE, SIESTA, cortar, detalleDe, estadoDeHerramienta, frase } from './estados'
 
@@ -15,8 +15,7 @@ const LILA = '#b79ae0'
 // Una conversación da señales de vida cada 10 s; sin señal en 35 s se da por cerrada.
 const PRESENCIA = 10000
 const SIN_SENAL = 35000
-// Un turno que dura más de esto cuenta como «un encargo largo»: baile, aviso de Windows.
-const LARGO = 120000
+// El estado «baile» (baile de fiesta tras un encargo largo) ya no se usa: el usuario pidió que Emi siempre haga «terminado».
 const AVISO_DESDE = 30000
 const ENTRE_AVISOS = 60000
 
@@ -36,6 +35,7 @@ let inicioTurno = 0
 let herramientas = 0
 let actual: MascotaEstado = 'hula'
 let desdeActual = 0
+let detalleActual = ''
 // El programa de Emi escritorio (mod\escritorio\emi_escritorio.pyw); si no existe o falta Python, el mod sigue sin él.
 let rutaEscritorio = ''
 let avisadoPython = false
@@ -61,32 +61,21 @@ async function fijar($: $, estado: MascotaEstado, detalle = '', desdeDemo = fals
   const dura = DURACION[estado]
   actual = estado
   desdeActual = ahora
+  detalleActual = detalle
   await update($, animo, () => ({ estado, desde: ahora, hasta: dura ? ahora + dura : 0, detalle })).catch(() => undefined)
   await ajustarRapido($)
   // El programa de escritorio lee el estado del archivo de la sesión: se publica en cada cambio.
   await publicar($)
 }
 
-// Un estado con animación propia (pensando: 5 fps) pide más tics que el latido de 250 ms, pero solo mientras dura ese estado:
-// el resto del tiempo no corre nada extra (se ve en la banda y en el panel, en terminal y escritorio).
+// Todos los estados van a 5 fps (un dibujo cada 200 ms), que no coincide con el latido de 250 ms: corre un reloj de 100 ms
+// mientras haya sesión, para que el cambio de dibujo no llegue con más de 100 ms de retraso.
 let rapido: Timer | undefined
-let rapidoDe = ''
 async function ajustarRapido($: $) {
-  const e = ESPECIAL[actual]
-  // A 4 fps o menos basta el latido de 250 ms: no hace falta un reloj extra.
-  if (!e || e.fps <= 4) {
-    rapido?.cancel()
-    rapido = undefined
-    rapidoDe = ''
+  if (rapido) {
     return
   }
-  if (rapido && rapidoDe === actual) {
-    return
-  }
-  rapido?.cancel()
-  rapidoDe = actual
-  // Dos tics por fotograma (mínimo 50 ms): el fotograma sale del reloj, el tic solo fija cuánto tarda en verse el cambio.
-  rapido = $.clock.every(Math.max(50, Math.round(500 / e.fps)), () => {
+  rapido = $.clock.every(100, () => {
     void update($, tic, n => n + 1).catch(() => undefined)
   })
 }
@@ -132,7 +121,8 @@ async function publicar($: $, cerrada = false) {
   if (!carpeta || !idSesion) {
     return
   }
-  const datos = { id: idSesion, trabajando, vivo: Date.now(), cerrada, estado: actual, desde: desdeActual }
+  // `frase` y `detalle` alimentan el globo de mensaje de Emi escritorio (lo que Claude está haciendo ahora).
+  const datos = { id: idSesion, trabajando, vivo: Date.now(), cerrada, estado: actual, desde: desdeActual, frase: frase(actual, desdeActual, Date.now()), detalle: detalleActual, color: COLORES[actual] }
   await $.fs.write(`${carpeta}/sesiones/${idSesion}.json`, JSON.stringify(datos)).catch(() => undefined)
 }
 
@@ -206,14 +196,17 @@ async function latir($: $) {
   }
 }
 
+// Los estados que enseña /emi probar: todos menos «baile», que ya no se usa.
+const DEMO = ESTADOS.filter(e => e !== 'baile')
+
 function probar($: $) {
   demo?.cancel()
   enDemo = true
   let i = 0
-  void fijar($, ESTADOS[0] ?? 'hula', 'demostración', true)
+  void fijar($, DEMO[0] ?? 'hula', 'demostración', true)
   demo = $.clock.every(3000, () => {
     i += 1
-    const siguiente = ESTADOS[i]
+    const siguiente = DEMO[i]
     if (!siguiente) {
       demo?.cancel()
       demo = undefined
@@ -425,8 +418,7 @@ export const register: Register = on => {
       abortado = e.reason === 'aborted'
       const duro = Date.now() - inicioTurno
       if (e.reason === 'answer') {
-        const largo = duro >= LARGO || herramientas >= 25
-        await fijar($, largo ? 'baile' : 'terminado', `${Math.max(1, Math.round(duro / 1000))} s · ${herramientas} herramientas`)
+        await fijar($, 'terminado', `${Math.max(1, Math.round(duro / 1000))} s · ${herramientas} herramientas`)
         // Cada vez que Claude termina suena el pitido de «listo»; el globo de Windows solo si el encargo fue largo.
         const globo = duro >= AVISO_DESDE
         if (globo) {
@@ -483,7 +475,7 @@ export const register: Register = on => {
     }
     if (orden === 'probar') {
       probar($)
-      return { text: 'Te enseño los 12 estados de Emi, tres segundos cada uno.' }
+      return { text: 'Te enseño los 11 estados de Emi, tres segundos cada uno.' }
     }
     return {
       text:
@@ -560,7 +552,7 @@ export const register: Register = on => {
 
     if (e.surface === 'terminal' && (tam || chico)) {
       const { Box, Button, Raster, Text } = $.ui.resolve(e)
-      const c = chico ? celdas(chico, fotogramaEn(a.estado, chico, ahora - a.desde)) : celdas(tam!, fotograma(a.estado, tam!, n))
+      const c = chico ? celdas(chico, fotogramaEn(a.estado, chico, ahora - a.desde)) : celdas(tam!, fotogramaEn(a.estado, tam!, ahora - a.desde))
       const reducido = (chico ? chico !== ESPECIAL[a.estado]?.tam : tam !== tope) && aj.tamano !== 'mini'
       const lineas = reducido ? [...extra, 'más grande: /emi panel'] : extra
       const banda = (
@@ -602,7 +594,7 @@ export const register: Register = on => {
     const tamSvg: Tam = aj.tamano === 'grande' ? 'XL' : aj.tamano === 'mini' ? 'N' : 'L'
     // «pensando»: su animación de 5 fotogramas a 5 fps (60x60), también en la banda: un SVG se escala y no tiene el límite de filas del terminal.
     const especial = aj.tamano === 'normal' || aj.tamano === 'grande' ? (ESPECIAL[a.estado]?.tam ?? null) : null
-    const d = especial ? dibujoSvg(especial, fotogramaEn(a.estado, especial, ahora - a.desde)) : dibujoSvg(tamSvg, fotograma(a.estado, tamSvg, n))
+    const d = especial ? dibujoSvg(especial, fotogramaEn(a.estado, especial, ahora - a.desde)) : dibujoSvg(tamSvg, fotogramaEn(a.estado, tamSvg, ahora - a.desde))
     const escala = 2
     const banda = (
       <Box flexDirection="row" gap={1}>
@@ -664,7 +656,7 @@ export const register: Register = on => {
       // «pensando» tiene su animación de 5 fotogramas a 5 fps (60x60): solo en el panel, con tamaño normal o grande y si cabe con el texto debajo.
       const especial = aj.tamano === 'normal' || aj.tamano === 'grande' ? especialQueCabe(a.estado, filas, columnas) : null
       const m = medidas(especial ?? plan.tam)
-      const c = especial ? celdas(especial, fotogramaEn(a.estado, especial, ahora - a.desde)) : celdas(plan.tam, fotograma(a.estado, plan.tam, n))
+      const c = especial ? celdas(especial, fotogramaEn(a.estado, especial, ahora - a.desde)) : celdas(plan.tam, fotogramaEn(a.estado, plan.tam, ahora - a.desde))
       const texto = (
         <Box flexDirection="column">
           <Text color={LILA} bold wrap="truncate-end">
@@ -696,7 +688,7 @@ export const register: Register = on => {
     const tamSvg: Tam = aj.tamano === 'grande' ? 'XL' : aj.tamano === 'mini' ? 'N' : 'L'
     // «pensando»: su animación de 5 fotogramas a 5 fps (60x60); un SVG se escala, así que siempre cabe.
     const especial = aj.tamano === 'normal' || aj.tamano === 'grande' ? (ESPECIAL[a.estado]?.tam ?? null) : null
-    const d = especial ? dibujoSvg(especial, fotogramaEn(a.estado, especial, ahora - a.desde)) : dibujoSvg(tamSvg, fotograma(a.estado, tamSvg, n))
+    const d = especial ? dibujoSvg(especial, fotogramaEn(a.estado, especial, ahora - a.desde)) : dibujoSvg(tamSvg, fotogramaEn(a.estado, tamSvg, ahora - a.desde))
     return (
       <Box flexDirection="column">
         <Svg source={d.source} alt={`${NOMBRE}: ${a.estado}`} width={d.ancho * 2} height={d.alto * 2} />

@@ -2,7 +2,12 @@ import { CONV } from './conversacion'
 import { descomprimir, TARJETA } from './dibujo'
 import { ESCR } from './escribiendo'
 import { HULA } from './hula'
+import { LEER } from './leyendo'
+import { NECE } from './necesita'
+import { DUER } from './duerme'
 import { PENS } from './pensando'
+import { RESP } from './responde'
+import { TERM } from './terminado'
 
 // PROTOTIPOS de estados con más fotogramas que el mod actual (datos generados en conversacion.ts y pensando.ts). Funciones puras, sin `$`.
 
@@ -14,6 +19,11 @@ export const ANIMACIONES: Record<string, { variantes: Record<string, VarianteCon
   pensando: { variantes: PENS, fps: 5 },
   hula: { variantes: HULA, fps: 4 },
   escribiendo: { variantes: ESCR, fps: 5 },
+  terminado: { variantes: TERM, fps: 5 },
+  responde: { variantes: RESP, fps: 5 },
+  leyendo: { variantes: LEER, fps: 8 },
+  necesita: { variantes: NECE, fps: 8 },
+  duerme: { variantes: DUER, fps: 8 },
 }
 export const VARIANTES_CONV = Object.keys(CONV)
 export const FOTOGRAMAS_CONV = 8

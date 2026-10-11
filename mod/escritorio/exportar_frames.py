@@ -9,6 +9,7 @@ import json
 import re
 from pathlib import Path
 
+import numpy as np
 from PIL import Image
 
 RAIZ = Path(__file__).resolve().parents[2]  # mod\escritorio -> raíz del proyecto
@@ -84,3 +85,48 @@ for estado, e in especial.items():
         total += 1
     print(estado, 'recortado a', caja, 'ampliado x%.2f' % escala)
 print('fotogramas escritos:', total)
+
+# Originales de alta resolución (1254x1254, mismos colores; solo se limpia el alfa, ver abajo) para los estados que los tienen: Emi escritorio los muestra a casi su
+# resolución. Si falta alguno, usa el fotograma pequeño de arriba. Se copian con el nombre <estado>_<n>.png (n desde 0, orden de nombre).
+HD = {
+    'pensando': RAIZ / 'arte' / 'EMI CLAUDE PENSANDO',
+    'hula': RAIZ / 'arte' / 'EMI-CLAUDE-DE-GUARDIA',
+    'terminado': RAIZ / 'arte' / 'EMI_CLAUDE_TERMINADO',
+    'responde': RAIZ / 'arte' / 'EMI-CALUDE-TE-RESPONDE',
+    'leyendo': RAIZ / 'arte' / 'EMI-CLAUDE-LEYENDO',
+    'necesita': RAIZ / 'arte' / 'EMI-CLAUDE-NECESITA',
+    'duerme': RAIZ / 'arte' / 'EMI-CLAUDE-DUERME',
+    'escribiendo': RAIZ / 'arte' / 'EMI-CLAUDE-ESCRIBIENDO-COMANDOS',
+}
+import shutil
+
+DESTINO_HD = Path(__file__).resolve().parent / 'hd'
+DESTINO_HD.mkdir(exist_ok=True)
+for viejo in DESTINO_HD.glob('*.png'):
+    viejo.unlink()
+for estado, carpeta in HD.items():
+    originales = sorted(carpeta.glob('*.png'))
+    cuadros = []
+    for origen in originales:
+        # Mismos colores y tamaño, pero alfa de todo o nada (>=128 opaco): los píxeles casi transparentes (motas, bordes suaves y el 251-254 del
+        # cuerpo) se mezclarían en pantalla con el color transparente de la ventana (magenta) y dejarían puntos morados alrededor de Emi.
+        px = np.array(Image.open(origen).convert('RGBA'))
+        px[..., 3] = np.where(px[..., 3] >= 128, 255, 0)
+        px[px[..., 3] == 0] = 0
+        cuadros.append(px)
+    # Todos los estados apoyan los pies en la misma línea y quedan centrados en el mismo punto, para que Emi no «salte» al cambiar de estado
+    # (los lienzos originales ponen los pies entre el 90 % y el 96 % de la altura). Se mueven todos los fotogramas del estado por igual:
+    # el movimiento propio de la animación se conserva.
+    cajas = [np.where(c[..., 3] > 0) for c in cuadros]
+    x0, x1 = min(xs.min() for _, xs in cajas), max(xs.max() for _, xs in cajas) + 1
+    y1 = max(ys.max() for ys, _ in cajas) + 1
+    lado = cuadros[0].shape[0]
+    dx, dy = lado // 2 - (x0 + x1) // 2, (lado - 8) - y1
+    for i, px in enumerate(cuadros):
+        nuevo = np.zeros_like(px)
+        ys, xs = np.where(px[..., 3] > 0)
+        ny, nx = ys + dy, xs + dx
+        dentro = (ny >= 0) & (ny < lado) & (nx >= 0) & (nx < lado)
+        nuevo[ny[dentro], nx[dentro]] = px[ys[dentro], xs[dentro]]
+        Image.fromarray(nuevo, 'RGBA').save(DESTINO_HD / f'{estado}_{i}.png', optimize=True)
+    print(estado, 'HD:', len(originales), 'fotogramas de', carpeta.name, f'(movido dx={dx}, dy={dy} px)')

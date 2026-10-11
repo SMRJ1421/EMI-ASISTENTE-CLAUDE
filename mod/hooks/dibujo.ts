@@ -18,8 +18,7 @@ export const TARJETA = 0xf5e6fd
 // De mayor a menor. S 13x20 (10 filas), N 26x40 (20), M 40x60 (30), L 52x80 (40), XL 64x96 (48).
 export const ORDEN: readonly Tam[] = ['XL', 'L', 'M', 'N', 'S']
 
-// Estados de movimiento lento: avanzan un fotograma cada dos tics en vez de cada uno.
-const LENTOS = new Set(['nueva', 'pensando', 'leyendo', 'duerme'])
+// Todos los estados avanzan un fotograma por tic (4 fps); ya no hay estados lentos (antes nueva, pensando, leyendo y duerme iban a 2 fps).
 
 const CUENTA = '0123456789abcdefghijklmnopqrstuvwxyz'
 const memoria = new Map<string, unknown>()
@@ -73,29 +72,22 @@ export function indice(estado: string, tic: number, cuantos: number): number {
   if (cuantos <= 1) {
     return 0
   }
-  return (LENTOS.has(estado) ? Math.floor(tic / 2) : tic) % cuantos
+  return tic % cuantos
 }
 
 export function fotograma(estado: string, tam: Tam, tic: number): string[] {
   return filasDe(estado, tam, indice(estado, tic, fotogramas(estado, tam).length))
 }
 
-// ---------- Estados con su propia animación (más fotogramas, más fps, 60x60) ----------
+// ---------- Qué fotograma toca, y los estados con su propia animación (8 fotogramas, 60x60) ----------
 
-// Un fotograma de la hoja especial del estado según los milisegundos desde que empezó (fps fijos, no cuenta redibujos).
-export function fotogramaEn(estado: string, tam: TamAnim, ms: number): string[] {
+// Todos los estados van a 5 fps (cada dibujo dura 200 ms): el ciclo dura 1,6 s con 8 fotogramas y 0,8 s con 4. El fotograma sale del tiempo.
+export const PASO_MS = 200
+
+// El fotograma que toca `ms` milisegundos después de empezar el estado (no cuenta redibujos).
+export function fotogramaEn(estado: string, tam: TamX, ms: number): string[] {
   const cuantos = fotogramas(estado, tam).length
-  const fps = ESPECIAL[estado]?.fps ?? 4
-  return filasDe(estado, tam, cuantos <= 1 ? 0 : Math.floor((Math.max(0, ms) * fps) / 1000) % cuantos)
-}
-
-// La hoja especial del estado para la banda del terminal: la de 60x60 si cabe (banda alta) y si no la de 28x28 (14 filas), con el texto al lado.
-export function especialEnBanda(estado: string, filas: number, columnas: number): TamAnim | null {
-  const e = ESPECIAL[estado]
-  if (!e) {
-    return null
-  }
-  return [e.tam, e.chico].find(t => medidas(t).filas <= filas && medidas(t).ancho + TEXTO_COLUMNAS <= columnas) ?? null
+  return filasDe(estado, tam, cuantos <= 1 ? 0 : Math.floor(Math.max(0, ms) / PASO_MS) % cuantos)
 }
 
 // La hoja especial del estado, si la tiene y cabe en `filas` x `columnas` con el texto debajo (si no, null y se usa el sprite de siempre).
@@ -106,6 +98,15 @@ export function especialQueCabe(estado: string, filas: number, columnas: number)
   }
   const m = medidas(e.tam)
   return m.ancho <= columnas && m.filas + TEXTO_FILAS <= filas ? e.tam : null
+}
+
+// La hoja especial del estado para la banda del terminal: la de 60x60 si cabe (banda alta) y si no la de 28x28 (14 filas), con el texto al lado.
+export function especialEnBanda(estado: string, filas: number, columnas: number): TamAnim | null {
+  const e = ESPECIAL[estado]
+  if (!e) {
+    return null
+  }
+  return [e.tam, e.chico].find(t => medidas(t).filas <= filas && medidas(t).ancho + TEXTO_COLUMNAS <= columnas) ?? null
 }
 
 // ---------- Elegir el tamaño que cabe ----------

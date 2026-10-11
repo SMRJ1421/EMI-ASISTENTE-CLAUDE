@@ -1,23 +1,23 @@
 {
   "archivos": [
-    "EMI-PENSANDO-FRAME-1.png",
-    "EMI-PENSANDO-FRAME-2.png",
-    "EMI-PENSANDO-FRAME-3.png",
-    "EMI-PENSANDO-FRAME-4.png",
-    "EMI-PENSANDO-FRAME-5.png",
-    "EMI-PENSANDO-FRAME-6.png",
-    "EMI-PENSANDO-FRAME-7.png",
-    "EMI-PENSANDO-FRAME-8.png"
+    "1.png",
+    "2.png",
+    "3.png",
+    "4.png",
+    "5.png",
+    "6.png",
+    "7.png",
+    "8.png"
   ],
   "fotogramas_identicos": 0,
   "nat60": {
-    "colores_exactos": 11140,
+    "colores_exactos": 14880,
     "colores_en_paleta": 88,
-    "error_de_color_rgb": 12.43
+    "error_de_color_rgb": 14.65
   },
   "nat28": {
-    "colores_exactos": 2471,
+    "colores_exactos": 3221,
     "colores_en_paleta": 88,
-    "error_de_color_rgb": 11.48
+    "error_de_color_rgb": 14.59
   }
 }

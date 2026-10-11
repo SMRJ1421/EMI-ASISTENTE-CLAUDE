@@ -1,0 +1,23 @@
+{
+  "archivos": [
+    "1.png",
+    "2.png",
+    "3.png",
+    "4.png",
+    "5.png",
+    "6.png",
+    "7.png",
+    "8.png"
+  ],
+  "fotogramas_identicos": 0,
+  "nat60": {
+    "colores_exactos": 13915,
+    "colores_en_paleta": 88,
+    "error_de_color_rgb": 14.89
+  },
+  "nat28": {
+    "colores_exactos": 2990,
+    "colores_en_paleta": 88,
+    "error_de_color_rgb": 12.78
+  }
+}
