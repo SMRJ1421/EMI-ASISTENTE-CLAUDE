@@ -4,11 +4,12 @@ Lee esto primero. Es el historial completo del proyecto, las reglas del usuario 
 
 ## 0. Estado vigente (2026-10-11) — manda sobre el resto de este archivo
 - **Estados:** 11 en uso (`baile` fuera). Arte nuevo naranja, 8 fotogramas: pensando, responde, escribiendo, leyendo, terminado, hula, necesita, duerme. Arte lila, 4 fotogramas: nueva, falla, para. **Todos a 5 fps** (`PASO_MS = 200` en `dibujo.ts`; `PASO_S` en Emi escritorio).
-- **Emi escritorio** (`mod\escritorio\emi_escritorio.pyw`): chat (= «frase de estado») con frase, detalle y **modelo que trabaja** (Opus o el ayudante: «Sonnet 5.5 (emi-sonnet)»); **barra vertical** a su derecha con el % usado de la sesión actual (ventana de 5 h, `session.measure`), verde/ámbar/rojo.
-- **Pruebas:** mod 55/55, laboratorio 21/21, `mod\escritorio\prueba_humo.py`. Recargar el mod sin abrir otra sesión: `/reload-plugins`.
-- **GitHub:** público, `SMRJ1421/EMI-ASISTENTE-CLAUDE`, versión 0.2.0; `arte\` no se sube. Instalar: `/plugin install mascota --marketplace SMRJ1421/EMI-ASISTENTE-CLAUDE`. Lo posterior a `19197d3` está solo en local.
+- **Emi escritorio** (`mod\escritorio\emi_escritorio.pyw`): chat (= «frase de estado») con frase, detalle y **modelo que trabaja**; se vuelve semitransparente con el ratón encima. **Dos barras** con el marco de `arte\barra-emi-claude` (90×196): caché (1 h) y % de la sesión (5 h), número en horizontal arriba. Emi y las barras van en **un solo Canvas**: las barras quedan a 2 px de Emi (perfil fila a fila) y quietas durante la animación (manda el dibujo más ancho del estado). Estados solo de escritorio: sujeta, caida, caminando (y guardando).
+- **Panel de la tuerca ⚙** con el arte de `arte\interfaz` (ventana, filas, interruptores, `emi-para-interfaz.png`, iconos `ICONO-INTERFAZ\1..7`): 8 opciones con interruptor, se abre centrado. Opción 8 «Atenuar fuera de Claude»: Emi al 40 % si delante no está `claude.exe`/`windowsterminal.exe` ni el escritorio. Sin «caída al soltar», Emi se queda donde la dejas. Piezas generadas por `exportar_frames.py` en `mod\escritorio\interfaz\`.
+- **Pruebas:** mod 58/58, laboratorio 21/21, `mod\escritorio\prueba_humo.py`. Recargar el mod sin abrir otra sesión: `/reload-plugins`.
+- **GitHub:** público, `SMRJ1421/EMI-ASISTENTE-CLAUDE`, versión 0.2.0; `arte\` no se sube. Instalar: `/plugin install mascota --marketplace SMRJ1421/EMI-ASISTENTE-CLAUDE`. Último commit subido: `5334491` (2026-10-11).
 - **Equipo Emi (global, no del mod):** Opus esfuerzo bajo por defecto; ayudantes `emi-haiku` y `emi-sonnet` en `~\.claude\agents\`.
-- **Historial completo:** `docs\CHAT_ACTUALIZACION_ANIMACION.md` (secciones 1–38).
+- **Historial completo:** `docs\CHAT_ACTUALIZACION_ANIMACION.md` (secciones 1–51).
 
 ## 1. Qué es
 Mod de Claude Code (hooks en TS/TSX, API de mods de Claude Code ≥ 2.1.294) con una mascota pixel, «Emilia / Emi»: 12 estados (11 en uso; ver §0), en un panel lateral acoplado (Dock) o en una banda sobre el prompt. Usuario: hispanohablante, Windows 11, Claude Code 2.1.295. **Prioridad nº 1: fidelidad al arte original (PNG).**

@@ -22,7 +22,7 @@ Si la descarga tarda más de 2 minutos (conexión lenta), sube el límite antes 
 - `/emi escritorio` y `/emi sin-escritorio`: Emi flotando sobre el escritorio mientras haya una conversación abierta (se arrastra; clic derecho: tamaño o cerrar).
 - Más: `/emi grande | normal | mini | compacta | oculta | sonido | silencio | avisos | sin-avisos`.
 
-**Para desarrollarlo desde la carpeta:** `claude --plugin-dir "<ruta>\emilia-mascota\mod"` (o `CLAUDE_CODE_PLUGIN_DIRS`). Comprobar: `claude plugin validate mod` y `claude plugin test mod` (55 pass); laboratorio: `claude plugin test laboratorio` (21 pass).
+**Para desarrollarlo desde la carpeta:** `claude --plugin-dir "<ruta>\emilia-mascota\mod"` (o `CLAUDE_CODE_PLUGIN_DIRS`). Comprobar: `claude plugin validate mod` y `claude plugin test mod` (58 pass); laboratorio: `claude plugin test laboratorio` (21 pass).
 
 ## Carpetas
 | Carpeta | Contenido |
@@ -43,7 +43,9 @@ Si la descarga tarda más de 2 minutos (conexión lenta), sube el límite antes 
 ## Estado a 2026-10-11 (el proceso completo está en `docs\CHAT_ACTUALIZACION_ANIMACION.md`)
 - Todos los estados van a 5 fps (cada dibujo 200 ms; ciclo de 1,6 s con 8 fotogramas y 0,8 s con 4). Estado `baile` fuera de uso.
 - Con arte nuevo (8 fotogramas, fondo transparente): pensando, responde, escribiendo, leyendo, terminado, hula, necesita, duerme. Con el arte original de 4 fotogramas: nueva, falla, para.
-- Emi escritorio (ventana flotante) con su «frase de estado» (el cuadro junto a ella). Sonido de «listo» cada vez que Claude termina.
+- Emi escritorio (ventana flotante) con su «frase de estado» (el cuadro junto a ella; semitransparente con el ratón encima). Sonido de «listo» cada vez que Claude termina.
+- A su derecha, dos barras con marco: tiempo que le queda al caché de la conversación y % usado de la sesión. Van pegadas a Emi y no se mueven con su animación.
+- La tuerca ⚙ abre el panel de configuración (8 opciones con interruptor): barras, tiempo trabajado, cuadro de estados, ocultar a Emi, caída al soltar, Emi en la app de Claude y atenuar a Emi (40 %) cuando no estás en Claude ni en el escritorio.
 - Sin verificar en terminal real: correlación `tool.check` → `tool.call`; aspecto en el Windows Terminal del autor de los sprites 60x60 y 28x28.
 
 ## Notas
