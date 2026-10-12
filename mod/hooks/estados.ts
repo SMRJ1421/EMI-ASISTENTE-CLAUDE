@@ -17,6 +17,7 @@ export const ESTADOS: readonly MascotaEstado[] = [
   'baile',
   'hula',
   'duerme',
+  'guardando',
 ]
 
 export const FRASES: Record<MascotaEstado, readonly string[]> = {
@@ -32,6 +33,7 @@ export const FRASES: Record<MascotaEstado, readonly string[]> = {
   baile: ['¡a bailar, que acabamos!', '¡gran trabajo!', '¡fiesta!'],
   hula: ['de guardia', 'aquí estoy', 'vigilando'],
   duerme: ['zzz…', 'descansando…', 'en modo siesta'],
+  guardando: ['guardando en mi segundo cerebro…', 'anotando en Obsidian…', 'archivando la nota…'],
 }
 
 export const COLORES: Record<MascotaEstado, string> = {
@@ -47,6 +49,7 @@ export const COLORES: Record<MascotaEstado, string> = {
   baile: '#bb6bd9',
   hula: '#b79ae0',
   duerme: '#8a8aa0',
+  guardando: '#9b6bdf',
 }
 
 // La carita de la versión compacta (una sola línea).
@@ -63,6 +66,7 @@ export const CARAS: Record<MascotaEstado, string> = {
   baile: '♪(´▽｀)♪',
   hula: '(•ᴗ•)🌺',
   duerme: '(－_－)zzZ',
+  guardando: '(•ᴗ•)📝',
 }
 
 // Cuánto dura cada estado pasajero antes de volver a la guardia (ms).
@@ -97,7 +101,16 @@ const LEE = new Set([
 const ESCRIBE = new Set(['Edit', 'Write', 'NotebookEdit', 'Bash', 'PowerShell'])
 const ESCRIBE_MCP = /(create|update|delete|write|post|send|set|add|upload|buy|stage|run|kill|patch|put|reply|forward|label|trash|move|share|copy|apply|publish|assign|start|stop|restore|retry|invalidate)/i
 
-export function estadoDeHerramienta(tool: string): MascotaEstado {
+// Escribir en el vault de Obsidian (ruta con «Obsidian», el CLI `obsidian` o un MCP de Obsidian) es «guardando».
+const OBSIDIAN = /obsidian/i
+
+export function estadoDeHerramienta(tool: string, entrada: Record<string, unknown> = {}): MascotaEstado {
+  if (ESCRIBE.has(tool) || ESCRIBE_MCP.test(tool)) {
+    const destino = ['file_path', 'notebook_path', 'path', 'command'].map(k => (typeof entrada[k] === 'string' ? entrada[k] : '')).join(' ')
+    if (OBSIDIAN.test(destino) || (tool.startsWith('mcp__') && OBSIDIAN.test(tool))) {
+      return 'guardando'
+    }
+  }
   if (tool === 'AskUserQuestion' || tool === 'ExitPlanMode') {
     return 'necesita'
   }

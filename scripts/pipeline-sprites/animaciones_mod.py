@@ -20,6 +20,7 @@ ESTADOS = {
     'leyendo': ('leyendo.ts', 'L5', 'L5S', False),
     'necesita': ('necesita.ts', 'N5', 'N5S', False),
     'duerme': ('duerme.ts', 'D5', 'D5S', False),
+    'guardando': ('guardando.ts', 'G5', 'G5S', False),
 }
 
 

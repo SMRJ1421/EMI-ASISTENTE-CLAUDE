@@ -2,8 +2,16 @@
 
 Lee esto primero. Es el historial completo del proyecto, las reglas del usuario y lo que falta. El README.md explica cómo cargar y compartir el mod; este archivo explica **cómo se llegó aquí y cómo seguir**.
 
+## 0. Estado vigente (2026-10-11) — manda sobre el resto de este archivo
+- **Estados:** 11 en uso (`baile` fuera). Arte nuevo naranja, 8 fotogramas: pensando, responde, escribiendo, leyendo, terminado, hula, necesita, duerme. Arte lila, 4 fotogramas: nueva, falla, para. **Todos a 5 fps** (`PASO_MS = 200` en `dibujo.ts`; `PASO_S` en Emi escritorio).
+- **Emi escritorio** (`mod\escritorio\emi_escritorio.pyw`): chat (= «frase de estado») con frase, detalle y **modelo que trabaja** (Opus o el ayudante: «Sonnet 5.5 (emi-sonnet)»); **barra vertical** a su derecha con el % usado de la sesión actual (ventana de 5 h, `session.measure`), verde/ámbar/rojo.
+- **Pruebas:** mod 55/55, laboratorio 21/21, `mod\escritorio\prueba_humo.py`. Recargar el mod sin abrir otra sesión: `/reload-plugins`.
+- **GitHub:** público, `SMRJ1421/EMI-ASISTENTE-CLAUDE`, versión 0.2.0; `arte\` no se sube. Instalar: `/plugin install mascota --marketplace SMRJ1421/EMI-ASISTENTE-CLAUDE`. Lo posterior a `19197d3` está solo en local.
+- **Equipo Emi (global, no del mod):** Opus esfuerzo bajo por defecto; ayudantes `emi-haiku` y `emi-sonnet` en `~\.claude\agents\`.
+- **Historial completo:** `docs\CHAT_ACTUALIZACION_ANIMACION.md` (secciones 1–38).
+
 ## 1. Qué es
-Mod de Claude Code (hooks en TS/TSX, API de mods de Claude Code ≥ 2.1.294) con una mascota pixel, «Emilia / Emi»: 12 estados × 4 fotogramas, en un panel lateral acoplado (Dock) o en una banda sobre el prompt. Usuario: hispanohablante, Windows 11, Claude Code 2.1.295. **Prioridad nº 1: fidelidad al arte original (PNG).**
+Mod de Claude Code (hooks en TS/TSX, API de mods de Claude Code ≥ 2.1.294) con una mascota pixel, «Emilia / Emi»: 12 estados (11 en uso; ver §0), en un panel lateral acoplado (Dock) o en una banda sobre el prompt. Usuario: hispanohablante, Windows 11, Claude Code 2.1.295. **Prioridad nº 1: fidelidad al arte original (PNG).**
 
 Estados: nueva, pensando, responde, leyendo, escribiendo, necesita, falla, para, terminado, baile, hula, duerme.
 
@@ -13,10 +21,10 @@ Estados: nueva, pensando, responde, leyendo, escribiendo, necesita, falla, para,
 - Hacer **copia de seguridad antes de modificar** (aquí: commit de Git antes de cada cambio, o carpeta en `respaldos\`).
 - No ejecutar ni instalar código de terceros. Sin servicios de pago ni claves de API. No tocar otros plugins, proyectos ni Obsidian.
 - **No declarar que algo se ve bien en su Windows Terminal si solo se simuló**; dejar una prueba sencilla para que el usuario lo compruebe.
-- Mantener: comandos `/emi`, avisos de Windows y sonidos, panel Dock, los 12 estados × 4 fotogramas.
-- **No añadir todavía los 20 estados nuevos / 8 fotogramas** (`arte\animacion.png`) ni el sprite de banda 18×28.
+- Mantener: comandos `/emi`, avisos de Windows y sonidos, panel Dock, los estados y sus fotogramas (ver §0).
+- Las animaciones nuevas llegan con **8 fotogramas**; si no se indican fps, preguntar.
 - **No borrar archivos del usuario.** Él limpia lo que sobre.
-- No subir a GitHub (`git push`) sin que lo pida. Repo privado: https://github.com/SMRJ1421/emilia-mascota
+- No subir a GitHub (`git push`) sin que lo pida. Repo **público**: https://github.com/SMRJ1421/EMI-ASISTENTE-CLAUDE (antes emilia-mascota)
 - Responder en español, conciso, distinguiendo hechos / hipótesis / límites.
 
 ## 3. Estructura
@@ -33,7 +41,7 @@ Archivos del mod: `hooks\register.tsx` (único módulo de hooks), `sprites.ts` (
 6. **Investigación de 4 repos** (sin ejecutar nada; ver `docs\INFORME_COMPARATIVO_MASCOTAS.md`): dgokcin/claude-pokemon-mod (sin licencia: solo se reimplementó la idea), TeXmeijin (MIT), clawd (código MIT, arte restringido), octaviusp (sin LICENSE, solo macOS). Técnicas T1–T10 evaluadas; el *vote-zoom* de dgokcin se probó y se descartó (peor que nuestros métodos).
 7. **Integración autorizada (2026-10-08):** (a) *fallo real*: denegación, rechazo de permiso o interrupción ya no asustan a Emi; `ExitPlanMode` → «necesita». (b) *Celdas Raster con espacio*: si las dos mitades de una celda son iguales, un espacio con fondo en vez de `▀` (63 % menos glifos en M; imagen idéntica en los 240 fotogramas). Resultado: 34/34 pruebas, tsc limpio.
 8. **Banco `blit`** (3.º punto, NO integrado): ver §7.
-9. **Empaquetado:** esta carpeta + repositorio Git privado (commits `68d7580`, `200a6f7`).
+9. **Empaquetado:** esta carpeta + repositorio Git (hoy público; commits `68d7580`, `200a6f7`).
 
 ## 5. Cosas del motor que ya costaron tiempo (no repetir)
 - Un solo módulo de hooks por plugin; `$` no se pasa a funciones de otros archivos; dos `session.start` sin matcher se rechazan.
@@ -58,7 +66,7 @@ Archivos del mod: `hooks\register.tsx` (único módulo de hooks), `sprites.ts` (
 - Los **20 estados nuevos / 8 fotogramas** de `arte\animacion.png` y el sprite de banda 18×28 (el usuario dijo «para más adelante»).
 - Hacer los scripts de `scripts\pipeline-sprites` portables: rutas fijas a `C:\Users\Admin0011\Downloads\…`; apuntar a `..\..\arte\` y dejar un único script de regeneración documentado (hoy hay muchos de pruebas).
 - Prueba automatizada para el panel Dock (hoy se prueba el cálculo `planPanel`, no el montaje real).
-- Decidir licencia del proyecto y confirmar que el repo es privado (los PNG son del usuario; el arte de clawd NO se usa).
+- Decidir licencia del proyecto (el repo es público) (los PNG son del usuario; el arte de clawd NO se usa).
 - Guardar las preferencias de Emi (`$.store`, por PC) en un archivo exportable si el usuario quiere llevarlas a otra PC.
 - Quitar del repo `laboratorio\tests\tmp_cifras.test.ts` (marcador vacío) y los scripts duplicados entre `pipeline-sprites` y `diagnostico`.
 

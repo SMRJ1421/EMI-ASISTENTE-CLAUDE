@@ -327,3 +327,95 @@ La **frase de estado** (p. ej. «picando código…», de `FRASES` en `estados.t
 **Copias:** `respaldos\duerme-originales\` (SHA-256) y `respaldos\mascota-2026-10-10-antes-de-duerme\`.
 **Verificación:** mod 55/55, laboratorio 21/21, tsc limpio, validate (mod y raíz) con avisos, `prueba_humo.py` OK. Emi escritorio reiniciada, caché borrada. **No visto en pantalla.**
 **Pendiente de arte nuevo:** nueva, falla y para.
+
+## 35. El chat de Emi escritorio muestra el modelo (2026-10-11)
+**Pedido:** debajo del detalle del chat (frase de estado) de Emi escritorio, el modelo que trabaja; si Opus delega en un ayudante (`emi-sonnet`, `emi-haiku`), que salga el del ayudante.
+**Cómo (mínimo):** `register.tsx` anota en `agent.spawn` el modelo de cada ayudante por su `agentId`; en `tool.call` toma el de la sesión (`$.session.model()`) o el del ayudante, y lo publica como `modelo` en el archivo de sesión. Al terminar el turno vuelve al de la sesión. `emi_escritorio.pyw` lo añade como última línea del detalle. Formato: «Opus 5.5», «Sonnet 5.5 (emi-sonnet)».
+**Solo en el chat de Emi escritorio**; el panel y la banda dentro de Claude no cambian.
+**Copia:** `respaldos\mascota-2026-10-11-antes-de-modelo-en-chat\`. **Verificación:** mod 55/55, tsc limpio, validate con avisos, `prueba_humo.py` OK. Sin prueba automática del cambio de modelo (el kit no simula ayudantes). **No visto en pantalla.**
+
+## 36. Barra del límite de la sesión en el chat de Emi escritorio (2026-10-11)
+**Pedido:** una barra con el % que queda de la sesión actual. **Interpretación:** el límite de uso de la suscripción en su ventana de **5 horas** («sesión actual» del uso de Claude), no la ventana de contexto de la conversación.
+**Cómo:** `register.tsx` escucha `session.measure` (lo envía el motor tras cada turno y cuando el límite se mueve un punto), toma `rateLimits` de tipo `five_hour` y publica `restante = 100 - percentUsed`. `emi_escritorio.pyw` (`barra`) lo dibuja como texto: `██████░░░░ 62 % de la sesión`, última línea del chat. Sin suscripción o antes del primer turno no sale.
+**Copia:** `respaldos\mascota-2026-10-11-antes-de-barra-limite\`. **Verificación:** autocomprobación de `barra`, mod 55/55, tsc limpio, `prueba_humo.py` OK. **No visto en pantalla**; el evento no se puede simular en el kit.
+
+## 37. Barra de la sesión: muestra lo usado y con diseño gráfico (2026-10-11)
+**Pedido:** ver el % **usado** (no el que queda) y un diseño menos simple. **Cambio:** el mod publica `usado` (`percentUsed` de `five_hour`) en vez de `restante`; Emi escritorio dibuja al final del chat un texto pequeño «Sesión actual: 20 % usado» y una barra de color en un `Canvas` (verde < 50 %, ámbar < 80 %, rojo después). Se quitó la barra de texto `█░`.
+**Copia:** `respaldos\mascota-2026-10-11-antes-de-barra-grafica\`. **Verificación:** mod 55/55, tsc limpio, `prueba_humo.py` con comprobaciones nuevas (texto, colores, barra al final). **No visto en pantalla.**
+
+## 38. Barra de la sesión: vertical, a la derecha de Emi (2026-10-11)
+**Pedido:** la barra del % usado, vertical, a la derecha de Emi escritorio y con el número dentro. **Cambio:** sale del chat; ahora es un `Canvas` opaco (24 px de ancho, 45 % del alto de Emi) colocado en el borde derecho de la ventana de Emi (`dibujar_uso`), se llena desde abajo con el color por tramos (verde/ámbar/rojo) y lleva «20%» en el centro. Se ve siempre que haya dato, aunque el chat esté oculto. Solo cambió `emi_escritorio.pyw` (y `prueba_humo.py`).
+**Copia:** `respaldos\mascota-2026-10-11-antes-de-barra-vertical\`. **Verificación:** `prueba_humo.py` OK (barra colocada a la derecha, texto «20%», se oculta sin dato). **No visto en pantalla.**
+
+## 39. Cuenta atrás de la sesión sobre la barra (2026-10-11)
+**Pedido:** encima de la barra, cuándo se renueva la sesión actual. **Cambio:** el mod publica `reinicio` (`resetsAt` de `five_hour`); Emi escritorio muestra encima de la barra lo que falta («2h10m», «35m»), con `falta()`, y lo refresca cuando cambia el texto. **Copia:** `respaldos\mascota-2026-10-11-antes-de-reinicio\`. **Verificación:** mod 55/55, tsc limpio, `prueba_humo.py` (cuenta atrás y casos sin dato o pasados). **No visto en pantalla.**
+
+## 40. Tuerca de configuración en Emi escritorio (2026-10-11)
+**Pedido:** una tuerca bajo la barra que abra una interfaz con botones: activar/desactivar la barra, ver el cuadro de estados y ocultar/mostrar a Emi; la tuerca nunca desaparece; la interfaz con cerrar y minimizar arriba a la derecha.
+**Cómo:** `⚙` en la ventana de Emi bajo la barra (siempre colocada en `dibujar_uso`). La interfaz es una ventana normal de Windows (`abrir_panel`, sin maximizar): sus botones nativos de minimizar y cerrar están arriba a la derecha; pulsar la tuerca la vuelve a mostrar. «Ver cuadro de estados» abre una tabla con las columnas fijas, calculada de los fotogramas cargados (`filas_cuadro`). Ocultar a Emi quita el dibujo y el chat; la barra y la tuerca siguen. Barra y oculta se guardan en `escritorio.json`.
+**Verificación:** `prueba_humo.py` (tuerca visible con barra apagada y Emi oculta, 11 filas del cuadro, panel se cierra). **No visto en pantalla.** Sin copia previa de este paso (la última es `respaldos\mascota-2026-10-11-antes-de-reinicio\`).
+
+## 41. Caída al soltar (2026-10-11)
+**Pedido:** al arrastrar a Emi hacia arriba y soltarla, que caiga al suelo; con un botón en la tuerca. Los costados no importan (el usuario hará después una animación para moverla de lado).
+**Cómo:** botón «Caída al soltar: activada/desactivada» (por defecto activada, se guarda como `caida`). Al soltar (`soltar` → `caer`), baja acelerando cada 16 ms hasta que su borde inferior toca el **suelo**: el borde del área útil de Windows (`SPI_GETWORKAREA`, encima de la barra de tareas; en este equipo y = 816 en una pantalla de 1536×864). Si ya está abajo no sube. La x no cambia.
+**Copia:** `respaldos\mascota-2026-10-11-antes-de-caida\`. **Verificación:** `prueba_humo.py` (soltada en y = 20 llega exacto al suelo). **No visto en pantalla.**
+
+## 42. Estado nuevo «guardando» (en Obsidian) (2026-10-11)
+**Pedido:** crear el estado de guardar en Obsidian con `arte\EMI-CLAUDE-SAVE-OBSIDIAN` (1–8.png, 1254x1254, transparencia; Emi con nota y cristal morado, globo «Guardando en mi segundo cerebro…»).
+**Cuándo sale:** una herramienta que escribe (`Write`, `Edit`, `Bash`, `PowerShell`, MCP de escritura) cuyo destino o comando menciona «obsidian» (ruta del vault, CLI `obsidian`) o un MCP de Obsidian (`estadoDeHerramienta(tool, entrada)`). Leer el vault sigue siendo «leyendo».
+**Dónde:** estado `guardando` en `types`, `estados.ts` (frases, color `#9b6bdf`, cara `(•ᴗ•)📝`), hojas `G5`/`G5S` (modo `ilustrada`, error de color 19,9 / 16,2: el texto del globo del dibujo no se lee a 60x60), HD de Emi escritorio (frase, prioridad 3, chat activo, cuadro de estados con 12 filas), laboratorio (`/emiconv guardando`). Tamaños antiguos (mini) sin sprite propio: usan el de guardia.
+**Copias:** `respaldos\guardando-originales\` (SHA-256), `respaldos\mascota-2026-10-11-antes-de-guardando\`. **Verificación:** mod 57/57 (prueba de hoja y de detección), laboratorio 21/21, tsc, validate, `prueba_humo.py`. **No visto en pantalla.**
+
+## 43. Estado «caida» con animación (solo Emi escritorio) (2026-10-11)
+**Pedido:** animar la caída al soltar con `arte\EMI-CLAUDE-CAIDA` (8 PNG 1254x1254: 1–4 cayendo, 5 aterriza con polvo, 6–8 se levanta).
+**Cómo:** solo en Emi escritorio (la caída no existe dentro de Claude, así que no va a los otros 4 lugares). `exportar_frames.py` copia `caida` a `hd\`. Al empezar a caer (`caer`), `caida_fase = ('cae', t)`: repite 1–4 a 5 fps; al tocar el suelo, `('aterriza', t)`: pasa una vez por 5–8 (0,8 s) y `fin_caida` vuelve al estado de Claude. Si ya estaba en el suelo, no hay animación. Fila «caida» en el cuadro de estados.
+**Copias:** `respaldos\caida-originales\` (SHA-256), `respaldos\mascota-2026-10-11-antes-de-caida-animada\`. **Verificación:** `prueba_humo.py` (cae, aterriza con fotogramas 5–8 y termina). **No visto en pantalla.**
+
+## 44. Estado «sujeta» al arrastrar (solo Emi escritorio) (2026-10-11)
+**Pedido:** cuando el usuario presiona a Emi con el cursor para arrastrarla, animación de `arte\EMI-CLAUDE-SUJETA` (8 PNG, Emi mareada, en bucle).
+**Cómo:** al pulsar (`empezar_arrastre`) se anota `sujeta`; `pintar` da prioridad a la caída, luego a «sujeta» (bucle a 5 fps), luego al estado de Claude. Al soltar (`soltar`) se quita y, si está activada, empieza la caída. `exportar_frames.py` copia `sujeta` a `hd\`. Fila en el cuadro de estados (14).
+**Copias:** `respaldos\sujeta-originales\` (SHA-256), `respaldos\mascota-2026-10-11-antes-de-sujeta\`. **Verificación:** `prueba_humo.py`. **No visto en pantalla.**
+
+## 45. Barra del caché («tiempo para perder el contexto») (2026-10-11)
+**Pedido:** una segunda barra a la derecha con el tiempo estimado para perder el contexto, de 1 hora. **Significado:** el caché de la conversación dura 1 h desde la última petición al modelo (5 min si la cuenta pasa a sobreconsumo); al caducar, el siguiente mensaje reprocesa toda la conversación y gasta más. La conversación no se borra.
+**Cómo:** el mod publica `actividad` (ms) en cada herramienta y al terminar cada turno de la sesión principal. Emi escritorio dibuja una barra vertical a la izquierda de la de uso, rotulada «caché», que se vacía en 60 min, con los minutos dentro («40m») y color verde > 30 min, ámbar > 10, rojo después. Se enciende/apaga con el mismo botón «Barra de uso» de la tuerca.
+**Copia:** `respaldos\mascota-2026-10-11-antes-de-barra-cache\`. **Verificación:** mod 57/57, tsc limpio, `prueba_humo.py` (texto, colocación). Es una estimación: el motor no informa del caché real. **No visto en pantalla.**
+**Arreglo (mismo día):** las barras toman `usado`/`reinicio` de la sesión más reciente que los tenga y `actividad` de la más reciente de todas, no solo de la sesión que muestra Emi (otras sesiones con un mod viejo no los publican). Tras `/reload-plugins`, la barra del caché aparece con la primera herramienta.
+**Barras fuera del dibujo (mismo día):** la ventana de Emi escritorio es `margen` (2×24+24 px) más ancha por la derecha y Emi se coloca centrada en su zona (`poner_emi`), así las barras y la tuerca quedan a su derecha sin taparla.
+
+## 46. Estado «caminando»: vuelve a su sitio (solo Emi escritorio) (2026-10-11)
+**Pedido:** si el usuario deja a Emi en otra posición horizontal, que vuelva caminando al punto donde estaba, con `arte\EMI-CLAUDE-CAMINANDO` (8 PNG, mira a la derecha).
+**Cómo:** «su sitio» es `casa_x` (se guarda en `escritorio.json`; arranca en la x guardada entonces, 1208). Al soltarla: si «caída al soltar» está activada, cae, aterriza y luego camina; si no, camina directamente (`volver`: 2 px cada 16 ms ≈ 125 px/s, animación a 5 fps, reflejada con `subsample(-1, 1)` cuando va a la izquierda). Agarrarla de nuevo corta la caída o el paseo (`movimiento`). Fila en el cuadro de estados (15).
+**Copias:** `respaldos\caminando-originales\` (SHA-256), `respaldos\mascota-2026-10-11-antes-de-caminando\`. **Verificación:** `prueba_humo.py` (vuelve exacta a su sitio) y espejo probado en Tk. **No visto en pantalla.** Pendiente: no hay botón para cambiar «su sitio».
+
+## 47. Paseo cuando no tiene nada que hacer (2026-10-11)
+**Pedido:** si Emi no hace nada durante 1 min, que se ponga a caminar. **Cómo:** en Emi escritorio, si el estado es de guardia o dormida y no la sujetas, no cae ni camina, tras `PASEO_S = 60` s sale de paseo (`pasear`): camina a un punto a 120–300 px de su sitio (dentro de la pantalla), espera 3 s y vuelve a su sitio. Cualquier trabajo de Claude o agarrarla reinicia el minuto. Oculta no pasea.
+**Arreglo encontrado al probar:** podían quedar dos paseos a la vez (p. ej. el de después de una caída y otro); ahora cada paseo nuevo cancela el anterior (`caminar_a` sube `movimiento`). La prueba de humo ya no deja que su Emi se cierre sola a mitad.
+**Copia:** `respaldos\mascota-2026-10-11-antes-de-paseo\`. **Verificación:** `prueba_humo.py` (vuelve a su sitio, paseo llega a ≥ 100 px). **No visto en pantalla.**
+
+## 48. Tiempo trabajado en la conversación, junto a la tuerca (2026-10-11)
+**Pedido:** una barra horizontal pequeña a la izquierda de la tuerca con el tiempo total que Claude ha trabajado en el chat (2 min + 30 s = «2m 30s»).
+**Cómo:** el mod suma la duración de cada turno de la sesión principal (`trabajado`, ms) y publica también `inicioTurno` mientras trabaja; al cargar (`session.start`, también tras `/reload-plugins`) recupera `trabajado` de su archivo de sesión; `/clear` lo pone a 0. Emi escritorio muestra «⏱ 2m 30s» (formatos: «45s», «2m 30s», «1h 05m»), contando en vivo el turno en marcha, de la conversación que muestra Emi. Se apaga con el botón «Barra de uso».
+**Copia:** `respaldos\mascota-2026-10-11-antes-de-tiempo-trabajado\`. **Verificación:** mod 57/57, tsc, `prueba_humo.py` (formato). Las pruebas de caminar/pasear de la prueba de humo tenían márgenes de tiempo cortos y fallaban de forma intermitente: ampliados. **No visto en pantalla.**
+**Recuperar al recargar (mismo día):** en `session.start` el mod relee de su archivo de sesión `usado`, `reinicio`, `actividad` y `trabajado`, así las barras no se vacían tras `/reload-plugins`.
+
+## 49. Un interruptor por barra en la tuerca (2026-10-11)
+Antes un solo botón «Barra de uso» apagaba todo. Ahora hay tres: «Barra de uso de la sesión», «Barra del caché» y «Tiempo trabajado» (`BARRAS`; se guardan como `barra_uso`, `barra_cache`, `barra_tiempo`; si no existen, toman el valor del antiguo `barra`). Copia: `respaldos\mascota-2026-10-11-antes-de-botones-barras\`. `prueba_humo.py` OK. No visto en pantalla.
+
+## 50. Banda en la app de Claude: apagada por defecto, botón en la tuerca (2026-10-11)
+**Pedido:** un botón en la tuerca para mostrar u ocultar la banda de Emi en la app de escritorio de Claude (sobre el prompt), siempre desactivada salvo que el usuario la encienda.
+**Cómo:** Emi escritorio escribe `~\.claude\mascota\banda_app.txt` («on»/«off») con el botón «Emi en la app de Claude»; el mod lo lee al empezar y cada 2 s (`leerBandaApp`) y, si está apagada, la banda de las superficies que no son el terminal (app de escritorio, editor, móvil) no dibuja nada. El terminal no cambia. También `/emi app` y `/emi sin-app`.
+**Copia:** `respaldos\mascota-2026-10-11-antes-de-banda-app\`. **Verificación:** mod 58/58 (prueba nueva: apagada por defecto, `/emi app` la muestra, `/emi sin-app` la quita), tsc, `prueba_humo.py`. **No visto en pantalla.**
+
+## 51. Marco de arte para las barras de uso y caché (2026-10-11)
+**Usuario:** usar `arte\barra-emi-claude\1.png` para la barra; en las dos (uso y caché), unos 60 px.
+**Hecho:** `exportar_frames.py` genera `escritorio\marco_barra.png` (60×130, hueco interior vaciado, vecino más cercano, alfa todo o nada). En `emi_escritorio.pyw`, `pintar_barra()` dibuja fondo claro + relleno desde abajo en el hueco (24,26)-(37,107), el marco encima y el texto girado 90° (el hueco mide 13 px). Colores verde/ámbar/rojo sin cambios. Prueba de humo ok; captura real con Tk revisada. Respaldo: `respaldos\escritorio-2026-10-11-antes-de-marco-barra\`.
+**Ajuste (mismo día):** barras más grandes (90×196, hueco (36,39)-(55,160)); número en horizontal arriba del hueco sobre una pastilla clara (en el medio lo tapan las gemas); «caché» y el tiempo de renovación centrados encima de su barra.
+**Barras pegadas (mismo día):** Emi y las dos barras se dibujan en un solo Canvas (`lienzo`; Emi es el ítem `emi`, las barras llevan tags `barra`/`cache`/`uso`). `mostrar()` calcula fila por fila el perfil derecho de Emi y el izquierdo del marco (`perfil()`, cacheado, ~17 ms por dibujo) y deja el marco a 2 px de ella; los lazos entran en sus huecos. Uso a 4 px del caché (`SEP_BARRAS`). La ventana ya no se sale por la derecha. Prueba de humo actualizada y en verde; captura real revisada.
+**Barras quietas (mismo día):** la posición se calcula con el dibujo más ancho de todo el estado (`mostrar(foto, grupo, todas)`, cacheado por grupo y escala): no bailan con la animación, pero se mueven al cambiar de estado. La de uso va pegada a la del caché (`paso_barras()`: lazos a 2 px, `SEP_BARRAS = 2`). Prueba nueva: 8 fotogramas, misma posición.
+**Globo semitransparente (mismo día):** con el ratón encima, el globo (frase de estado) baja a opacidad 0,45 (`ALFA_GLOBO`); al salir vuelve a 1. `globo_opaco()` comprueba que el ratón salió de verdad (el `<Leave>` también salta entre sus etiquetas).
+**Sin caída = quieta (mismo día):** con «caída al soltar» desactivada, al soltarla se queda donde la dejaste (ese punto pasa a ser `casa_x`), no vuelve caminando y no sale a pasear. Prueba de humo actualizada.
+**Panel de configuración nuevo (mismo día):** con el arte de `arte\interfaz` (1 ventana, 3/4 fila normal/encima, 6/7 interruptor sí/no). `exportar_frames.py` genera `escritorio\interfaz\` (fondo 380×565 con el interior vaciado y alargado, filas 330×46 con los extremos conservados, interruptores, cabecera con la cabeza de Emi de guardia), con Lanczos y alfa todo o nada. El panel es un Toplevel sin marco de Windows hecho con un Canvas: se arrastra por la barra de título, minimizar lo esconde (la tuerca lo reabre) y cerrar lo cierra. Filas en `FILAS_PANEL`; cada una se resalta al pasar el ratón. Prueba de humo actualizada.
+**Cabecera del panel:** ahora usa `arte\interfaz\emi-para-interfaz.png` (Emi apoyada en una barra), recortada hasta la barra y reducida a 112 px de alto; la barra queda sobre la primera fila. El panel se abre en el centro de la pantalla.
+**Iconos y un interruptor en cada fila:** iconos de `arte\interfaz\ICONO-INTERFAZ\1..7.png` (exportados a `interfaz\icono_<clave>.png`, 34 px). «Ver cuadro de estados» y «Ocultar a Emi» también llevan interruptor (cuadro abierto / Emi oculta); al cerrar el cuadro con la X su interruptor se apaga.
+**Atenuar fuera de Claude (opción 8 del panel, activada por defecto):** cada 0,5 s `vigilar_foco()` mira la ventana en primer plano (`ventana_delante()`, ctypes): si no es Claude (`claude.exe`, `windowsterminal.exe`), ni el escritorio/barra de tareas, ni la propia Emi, Emi y su globo bajan a opacidad 0,4 (`ALFA_LEJOS`). Se guarda como `atenuar` en escritorio.json. Icono provisional: el del ojo (falta un 8.png en ICONO-INTERFAZ). Panel alargado a 8 filas (fondo 380×617).

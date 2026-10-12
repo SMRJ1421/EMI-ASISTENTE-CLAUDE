@@ -32,16 +32,36 @@ const panel = atom({ plugin: 'mascota', key: 'panel' } as const, false)
 // Lo que vive aquí se reinicia en cada recarga; lo que se dibuja está en $.state.
 let trabajando = false
 let inicioTurno = 0
+// Tiempo total que Claude ha trabajado en esta conversación (ms, turnos terminados); sobrevive a /reload-plugins leyendo el archivo de la sesión.
+let trabajado = 0
 let herramientas = 0
 let actual: MascotaEstado = 'hula'
 let desdeActual = 0
 let detalleActual = ''
+// Modelo que trabaja ahora (la sesión o el ayudante), para el chat de Emi escritorio; `modelos` guarda el de cada ayudante por su id.
+let modeloActual = ''
+const modelos: Record<string, string> = {}
+// Porcentaje usado del límite de la sesión actual (ventana de 5 horas); undefined sin suscripción o antes de la primera medida.
+let usado: number | undefined
+// Última petición al modelo (ms): el caché de la conversación caduca 1 h después; Emi escritorio muestra cuánto queda.
+let actividad = 0
+let reinicio: string | undefined // cuándo se renueva esa ventana (ISO 8601)
+const nombreModelo = (id: string) => id.replace(/^claude-/, '').replace(/-(\d+)-(\d+)$/, ' $1.$2').replace(/^\w/, c => c.toUpperCase())
 // El programa de Emi escritorio (mod\escritorio\emi_escritorio.pyw); si no existe o falta Python, el mod sigue sin él.
 let rutaEscritorio = ''
 let avisadoPython = false
 let enDemo = false
 let ultimoAviso = 0
 let carpeta = ''
+// La banda en la app de escritorio de Claude: apagada salvo que la enciendas (botón de la tuerca de Emi escritorio, que escribe banda_app.txt, o /emi app).
+let bandaApp = false
+async function leerBandaApp($: $) {
+  const antes = bandaApp
+  bandaApp = carpeta ? (await $.fs.read(`${carpeta}/banda_app.txt`).catch(() => '')).trim() === 'on' : bandaApp
+  if (bandaApp !== antes) {
+    await update($, tic, n => n + 1).catch(() => undefined)
+  }
+}
 let idSesion = ''
 let esWindows = false
 let latido: Timer | undefined
@@ -122,7 +142,7 @@ async function publicar($: $, cerrada = false) {
     return
   }
   // `frase` y `detalle` alimentan el globo de mensaje de Emi escritorio (lo que Claude está haciendo ahora).
-  const datos = { id: idSesion, trabajando, vivo: Date.now(), cerrada, estado: actual, desde: desdeActual, frase: frase(actual, desdeActual, Date.now()), detalle: detalleActual, color: COLORES[actual] }
+  const datos = { id: idSesion, trabajando, vivo: Date.now(), cerrada, estado: actual, desde: desdeActual, frase: frase(actual, desdeActual, Date.now()), detalle: detalleActual, modelo: modeloActual, usado, reinicio, actividad, trabajado, inicioTurno: trabajando ? inicioTurno : 0, bandaApp, color: COLORES[actual] }
   await $.fs.write(`${carpeta}/sesiones/${idSesion}.json`, JSON.stringify(datos)).catch(() => undefined)
 }
 
@@ -193,6 +213,9 @@ async function latir($: $) {
   }
   if (vueltas % 20 === 0) {
     await contarOtras($)
+  }
+  if (vueltas % 8 === 0) {
+    await leerBandaApp($)
   }
 }
 
@@ -284,6 +307,14 @@ export const register: Register = on => {
     rutaEscritorio = `${$.plugin.root}/escritorio/emi_escritorio.pyw`
     idSesion = await $.session.id().catch(() => '')
     esWindows = (await $.env.get('OS').catch(() => undefined)) === 'Windows_NT'
+    if (carpeta && idSesion) {
+      // Tras /reload-plugins el módulo empieza en blanco: se recuperan los últimos datos publicados para que las barras no se vacíen.
+      const previo = JSON.parse((await $.fs.read(`${carpeta}/sesiones/${idSesion}.json`).catch(() => '')) || '{}') as Record<string, unknown>
+      trabajado = typeof previo.trabajado === 'number' ? previo.trabajado : 0
+      usado = typeof previo.usado === 'number' ? previo.usado : usado
+      reinicio = typeof previo.reinicio === 'string' ? previo.reinicio : reinicio
+      actividad = typeof previo.actividad === 'number' ? previo.actividad : actividad
+    }
 
     const guardado = (await $.store.get('ajustes').catch(() => undefined)) as Partial<MascotaAjustes> | undefined
     if (guardado && typeof guardado === 'object') {
@@ -298,8 +329,8 @@ export const register: Register = on => {
 
     await $.command.register({
       name: 'emi',
-      description: 'Emi, la mascota: /emi grande | normal | mini | compacta | oculta | panel | banda | sonido | silencio | avisos | sin-avisos | escritorio | sin-escritorio | probar',
-      argumentHint: '[grande | normal | mini | compacta | oculta | panel | banda | sonido | silencio | avisos | sin-avisos | escritorio | sin-escritorio | probar]',
+      description: 'Emi, la mascota: /emi grande | normal | mini | compacta | oculta | panel | banda | sonido | silencio | avisos | sin-avisos | escritorio | sin-escritorio | app | sin-app | probar',
+      argumentHint: '[grande | normal | mini | compacta | oculta | panel | banda | sonido | silencio | avisos | sin-avisos | escritorio | sin-escritorio | app | sin-app | probar]',
       immediate: true,
     })
 
@@ -311,6 +342,7 @@ export const register: Register = on => {
     latido = $.clock.every(LATIDO, () => {
       void latir($)
     })
+    await leerBandaApp($)
     await publicar($)
     await lanzarEscritorio($)
     await contarOtras($)
@@ -329,6 +361,7 @@ export const register: Register = on => {
     await publicar($, true)
     if (e.reason === 'clear') {
       trabajando = false
+      trabajado = 0
       await fijar($, 'nueva')
     }
     return next(e)
@@ -367,9 +400,16 @@ export const register: Register = on => {
   })
 
   on('tool.call', async ($, e, next) => {
+    const modelo = e.agentId === undefined ? nombreModelo(await $.session.model().catch(() => '')) : modelos[e.agentId] ?? ''
+    const cambia = modelo !== modeloActual
+    modeloActual = modelo
+    if (e.agentId !== undefined && cambia) {
+      await publicar($)
+    }
     if (e.agentId === undefined) {
       herramientas += 1
-      await fijar($, estadoDeHerramienta(e.tool), detalleDe(e.tool, e as unknown as Record<string, unknown>))
+      actividad = Date.now()
+      await fijar($, estadoDeHerramienta(e.tool, e as unknown as Record<string, unknown>), detalleDe(e.tool, e as unknown as Record<string, unknown>))
     }
     const r = await next(e)
     const denegado = e.tool_use_id !== undefined && denegados.delete(e.tool_use_id)
@@ -383,6 +423,25 @@ export const register: Register = on => {
         // Un permiso rechazado, una herramienta denegada o una interrupción no son un fallo: Claude sigue pensando.
         await fijar($, 'pensando')
       }
+    }
+    return r
+  }).catch(($, e, next) => next(e))
+
+  on('session.measure', async ($, e, next) => {
+    const sesion = e.rateLimits.find(r => r.kind === 'five_hour')
+    if (sesion) {
+      usado = sesion.percentUsed
+      reinicio = sesion.resetsAt
+      await publicar($)
+    }
+    return next(e)
+  }).catch(($, e, next) => next(e))
+
+  // Al arrancar un ayudante se anota su modelo (y su nombre), para mostrarlo mientras trabaja.
+  on('agent.spawn', async ($, e, next) => {
+    const r = await next(e)
+    if ('agentId' in r && r.agentId) {
+      modelos[r.agentId] = nombreModelo(r.model) + (e.subagentType ? ` (${e.subagentType})` : '')
     }
     return r
   }).catch(($, e, next) => next(e))
@@ -414,9 +473,12 @@ export const register: Register = on => {
 
   on('turn.complete', async ($, e, next) => {
     if (e.agentId === undefined) {
+      modeloActual = nombreModelo(await $.session.model().catch(() => ''))
+      actividad = Date.now()
       trabajando = false
       abortado = e.reason === 'aborted'
       const duro = Date.now() - inicioTurno
+      trabajado += duro
       if (e.reason === 'answer') {
         await fijar($, 'terminado', `${Math.max(1, Math.round(duro / 1000))} s · ${herramientas} herramientas`)
         // Cada vez que Claude termina suena el pitido de «listo»; el globo de Windows solo si el encargo fue largo.
@@ -450,6 +512,14 @@ export const register: Register = on => {
     if (orden === 'avisos' || orden === 'sin-avisos') {
       await guardar({ avisos: orden === 'avisos' })
       return { text: orden === 'avisos' ? 'Aviso de Windows cuando termina un encargo largo o te necesita: activado.' : 'Sin avisos de Windows.' }
+    }
+    if (orden === 'app' || orden === 'sin-app') {
+      bandaApp = orden === 'app'
+      if (carpeta) {
+        await $.fs.write(`${carpeta}/banda_app.txt`, bandaApp ? 'on' : 'off').catch(() => undefined)
+      }
+      await update($, tic, n => n + 1).catch(() => undefined)
+      return { text: bandaApp ? 'Emi aparece sobre el prompt en la app de escritorio de Claude.' : 'Emi ya no aparece sobre el prompt en la app de escritorio.' }
     }
     if (orden === 'escritorio' || orden === 'sin-escritorio') {
       await guardar({ escritorio: orden === 'escritorio' })
@@ -503,7 +573,7 @@ export const register: Register = on => {
     vista = { columnas: e.viewport?.columns ?? 0, filas: e.viewport?.rows ?? 0, isFullscreen: e.viewport?.isFullscreen ?? null }
     const aj = await read($, ajustes)
     // Con el panel abierto Emi vive allí: la banda no la repite.
-    if (e.props.hasSurvey || aj.tamano === 'oculta' || (await read($, panel))) {
+    if (e.props.hasSurvey || aj.tamano === 'oculta' || (await read($, panel)) || (e.surface !== 'terminal' && !bandaApp)) {
       return next(e)
     }
     const a = await read($, animo)

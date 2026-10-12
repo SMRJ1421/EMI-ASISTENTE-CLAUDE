@@ -20,6 +20,7 @@ ESTADOS = {
     'leyendo': dict(entrada='EMI-CLAUDE-LEYENDO', patron='*.png', ts='leyendo.ts', const='LEER', titulo='Leyendo', modo='ilustrada'),
     'terminado': dict(entrada='EMI_CLAUDE_TERMINADO', patron='*.png', ts='terminado.ts', const='TERM', titulo='Terminado', modo='ilustrada'),
     'duerme': dict(entrada='EMI-CLAUDE-DUERME', patron='*.png', ts='duerme.ts', const='DUER', titulo='Duerme', modo='ilustrada'),
+    'guardando': dict(entrada='EMI-CLAUDE-SAVE-OBSIDIAN', patron='*.png', ts='guardando.ts', const='GUAR', titulo='Guardando en Obsidian', modo='ilustrada'),
     'necesita': dict(entrada='EMI-CLAUDE-NECESITA', patron='*.png', ts='necesita.ts', const='NECE', titulo='Necesita', modo='ilustrada'),
     'pensando': dict(entrada='EMI CLAUDE PENSANDO', patron='*.png', ts='pensando.ts', const='PENS', titulo='Pensando', modo='ilustrada'),
 }

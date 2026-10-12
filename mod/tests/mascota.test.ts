@@ -183,6 +183,7 @@ describe('qué hace Emi con cada herramienta', () => {
 
 describe('la barra', () => {
   test('se dibuja en el terminal (todos los tamaños) y en el escritorio', async $ => {
+    await $.command.run({ command: 'emi', args: 'app' })
     for (const tamano of ['grande', 'normal', 'mini', 'compacta']) {
       await $.command.run({ command: 'emi', args: tamano } as never)
       for (const surface of ['terminal', 'desktop'] as const) {
@@ -215,6 +216,7 @@ describe('la barra', () => {
     expect(await leyendo.find({ type: 'Text', text: cualquiera(FRASES.leyendo) })).toBeDefined()
     await leyendo.unmount()
     await $.tool.call({ tool: 'Edit', file_path: 'C:/x/informe.docx', old_string: 'a', new_string: 'b' })
+    await $.command.run({ command: 'emi', args: 'app' })
     const escribiendo = await $.ui.mount({ plugin: 'mascota', surface: 'desktop', component: 'AbovePrompt', props: BANDA })
     expect(await escribiendo.find({ type: 'Text', text: 'Edit informe.docx' })).toBeDefined()
     await escribiendo.unmount()
@@ -600,6 +602,53 @@ describe('duerme con 8 fotogramas con 5 fps (60x60)', () => {
   })
 })
 
+describe('guardando con 8 fotogramas con 5 fps (60x60)', () => {
+  test('la hoja tiene 8 fotogramas distintos y se usa en el panel y en las bandas', () => {
+    expect(ESPECIAL['guardando']).toEqual({ tam: 'G5', chico: 'G5S', tarjeta: false })
+    expect(medidas('G5')).toEqual({ ancho: 60, alto: 60, filas: 30 })
+    expect(medidas('G5S')).toEqual({ ancho: 28, alto: 28, filas: 14 })
+    const vistos = new Set<string>()
+    for (let i = 0; i < 8; i += 1) {
+      const filas = filasDe('guardando', 'G5', i)
+      expect(filas.length).toBe(60)
+      expect(filas.every(f => f.length === 60)).toBe(true)
+      vistos.add(filas.join('/'))
+    }
+    expect(vistos.size).toBe(8)
+    expect(fotogramaEn('guardando', 'G5', 200).join('/')).toBe(filasDe('guardando', 'G5', 1).join('/'))
+    expect(fotogramaEn('guardando', 'G5', 1600).join('/')).toBe(fotogramaEn('guardando', 'G5', 0).join('/'))
+    expect(especialQueCabe('guardando', 34, 60)).toBe('G5')
+    expect(especialEnBanda('guardando', 14, 151)).toBe('G5S')
+  })
+})
+
+describe('banda en la app de escritorio', () => {
+  test('apagada por defecto; /emi app la muestra y /emi sin-app la quita', async ($, on) => {
+    on('ui.render', () => ({ type: 'engine', ref: 1 }) as never) // lo que queda debajo cuando Emi no dibuja
+    const sin = await $.ui.mount({ plugin: 'mascota', surface: 'desktop', component: 'AbovePrompt', props: BANDA })
+    expect(await sin.find({ type: 'Svg' })).toBeUndefined()
+    await sin.unmount()
+    await $.command.run({ command: 'emi', args: 'app' })
+    const con = await $.ui.mount({ plugin: 'mascota', surface: 'desktop', component: 'AbovePrompt', props: BANDA })
+    expect(await con.find({ type: 'Svg' })).toBeDefined()
+    await con.unmount()
+    await $.command.run({ command: 'emi', args: 'sin-app' })
+    const otra = await $.ui.mount({ plugin: 'mascota', surface: 'desktop', component: 'AbovePrompt', props: BANDA })
+    expect(await otra.find({ type: 'Svg' })).toBeUndefined()
+    await otra.unmount()
+  })
+})
+
+describe('guardando en Obsidian', () => {
+  test('escribir en el vault, el CLI obsidian o un MCP de Obsidian es «guardando»; leerlo no', () => {
+    expect(estadoDeHerramienta('Write', { file_path: 'C:/Users/x/OneDrive/Obsidian/SEGUNDO_CEREBRO/nota.md' })).toBe('guardando')
+    expect(estadoDeHerramienta('Bash', { command: 'obsidian create name="nota"' })).toBe('guardando')
+    expect(estadoDeHerramienta('mcp__obsidian__update_note')).toBe('guardando')
+    expect(estadoDeHerramienta('Read', { file_path: 'C:/Obsidian/nota.md' })).toBe('leyendo')
+    expect(estadoDeHerramienta('Write', { file_path: 'C:/proyecto/a.ts' })).toBe('escribiendo')
+  })
+})
+
 describe('5 fps en todos los estados', () => {
   test('cada dibujo dura 200 ms; el ciclo es de 1,6 s con 8 fotogramas y de 0,8 s con 4', () => {
     expect(PASO_MS).toBe(200)
@@ -712,6 +761,7 @@ describe('pensando con 8 fotogramas con 5 fps (60x60)', () => {
   test('la banda de la app de escritorio también usa la animación nueva en «pensando»', async ($, on) => {
     on('turn.start', (_$, e) => ({ turnId: e.turnId }))
     await $.turn.start({ text: 'hola', turnId: 't11' })
+    await $.command.run({ command: 'emi', args: 'app' })
     const ui = await $.ui.mount({ plugin: 'mascota', surface: 'desktop', component: 'AbovePrompt', props: BANDA })
     const svg = JSON.stringify(await ui.find({ type: 'Svg' }))
     expect(svg).toContain('viewBox=\\"0 0 60 60\\"')

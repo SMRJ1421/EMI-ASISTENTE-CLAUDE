@@ -11,6 +11,7 @@ export type MascotaEstado =
   | 'baile'
   | 'hula'
   | 'duerme'
+  | 'guardando'
 
 // Qué hace Emi ahora: `desde` es cuándo empezó, `hasta` cuándo vuelve a su sitio (0 = sin plazo).
 export type MascotaAnimo = { estado: MascotaEstado; desde: number; hasta: number; detalle: string }

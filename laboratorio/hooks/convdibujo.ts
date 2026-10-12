@@ -5,6 +5,7 @@ import { HULA } from './hula'
 import { LEER } from './leyendo'
 import { NECE } from './necesita'
 import { DUER } from './duerme'
+import { GUAR } from './guardando'
 import { PENS } from './pensando'
 import { RESP } from './responde'
 import { TERM } from './terminado'
@@ -24,6 +25,7 @@ export const ANIMACIONES: Record<string, { variantes: Record<string, VarianteCon
   leyendo: { variantes: LEER, fps: 8 },
   necesita: { variantes: NECE, fps: 8 },
   duerme: { variantes: DUER, fps: 8 },
+  guardando: { variantes: GUAR, fps: 8 },
 }
 export const VARIANTES_CONV = Object.keys(CONV)
 export const FOTOGRAMAS_CONV = 8

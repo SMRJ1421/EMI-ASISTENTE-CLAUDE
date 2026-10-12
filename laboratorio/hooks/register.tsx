@@ -203,7 +203,7 @@ async function bench($: $) {
   }
 }
 
-// Prueba de estados con más fotogramas: /emiconv [nueva|pensando|hula|escribiendo|terminado|responde|leyendo|necesita|duerme] nat60 | nn60 | nn48 | nn40 | nn30 | actual [fps] | off.
+// Prueba de estados con más fotogramas: /emiconv [nueva|pensando|hula|escribiendo|terminado|responde|leyendo|necesita|duerme|guardando] nat60 | nn60 | nn48 | nn40 | nn30 | actual [fps] | off.
 const CONVPANEL = 'emiconv'
 const ticConv = atom({ plugin: 'mascota-lab', key: 'ticConv' } as const, 0)
 let convEstado = 'nueva'
