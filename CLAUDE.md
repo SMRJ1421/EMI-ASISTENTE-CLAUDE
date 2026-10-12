@@ -2,12 +2,12 @@
 
 Lee esto primero. Es el historial completo del proyecto, las reglas del usuario y lo que falta. El README.md explica cómo cargar y compartir el mod; este archivo explica **cómo se llegó aquí y cómo seguir**.
 
-## 0. Estado vigente (2026-10-11) — manda sobre el resto de este archivo
+## 0. Estado vigente (2026-10-12) — manda sobre el resto de este archivo
 - **Estados:** 11 en uso (`baile` fuera). Arte nuevo naranja, 8 fotogramas: pensando, responde, escribiendo, leyendo, terminado, hula, necesita, duerme. Arte lila, 4 fotogramas: nueva, falla, para. **Todos a 5 fps** (`PASO_MS = 200` en `dibujo.ts`; `PASO_S` en Emi escritorio).
 - **Emi escritorio** (`mod\escritorio\emi_escritorio.pyw`): chat (= «frase de estado») con frase, detalle y **modelo que trabaja**; se vuelve semitransparente con el ratón encima. **Dos barras** con el marco de `arte\barra-emi-claude` (90×196): caché (1 h) y % de la sesión (5 h), número en horizontal arriba. Emi y las barras van en **un solo Canvas**: las barras quedan a 2 px de Emi (perfil fila a fila) y quietas durante la animación (manda el dibujo más ancho del estado). Estados solo de escritorio: sujeta, caida, caminando (y guardando).
-- **Panel de la tuerca ⚙** con el arte de `arte\interfaz` (ventana, filas, interruptores, `emi-para-interfaz.png`, iconos `ICONO-INTERFAZ\1..7`): 8 opciones con interruptor, se abre centrado. Opción 8 «Atenuar fuera de Claude»: Emi al 40 % si delante no está `claude.exe`/`windowsterminal.exe` ni el escritorio. Sin «caída al soltar», Emi se queda donde la dejas. Piezas generadas por `exportar_frames.py` en `mod\escritorio\interfaz\`.
+- **Panel de la tuerca ⚙** con el arte de `arte\interfaz` (ventana, filas, interruptores, `emi-para-interfaz.png`, iconos `ICONO-INTERFAZ\1..7`): **9 opciones** con interruptor, se abre centrado. «Frase de estado» muestra u oculta el globo. «Atenuar fuera de Claude»: Emi al 40 % si delante no está `claude.exe`/`windowsterminal.exe` ni el escritorio. Sin «caída al soltar», Emi se queda donde la dejas. Piezas generadas por `exportar_frames.py` en `mod\escritorio\interfaz\`. Atenuar y Frase de estado usan el icono del ojo hasta que haya `8.png`/`9.png`.
 - **Pruebas:** mod 58/58, laboratorio 21/21, `mod\escritorio\prueba_humo.py`. Recargar el mod sin abrir otra sesión: `/reload-plugins`.
-- **GitHub:** público, `SMRJ1421/EMI-ASISTENTE-CLAUDE`, versión 0.2.0; `arte\` no se sube. Instalar: `/plugin install mascota --marketplace SMRJ1421/EMI-ASISTENTE-CLAUDE`. Último commit subido: `5334491` (2026-10-11).
+- **GitHub:** público, `SMRJ1421/EMI-ASISTENTE-CLAUDE`, versión **0.3.0** (súbela en cada publicación: si no cambia, `claude plugin update` no trae nada); `arte\` no se sube. Instalar: `/plugin install mascota --marketplace SMRJ1421/EMI-ASISTENTE-CLAUDE`. Para actualizar en otro PC: `claude plugin marketplace update emilia-mascota` y reinstalar. Emi escritorio (y su tuerca) necesita Python con `pythonw` en el PATH.
 - **Equipo Emi (global, no del mod):** Opus esfuerzo bajo por defecto; ayudantes `emi-haiku` y `emi-sonnet` en `~\.claude\agents\`.
 - **Historial completo:** `docs\CHAT_ACTUALIZACION_ANIMACION.md` (secciones 1–51).
 
@@ -31,7 +31,7 @@ Estados: nueva, pensando, responde, leyendo, escribiendo, necesita, falla, para,
 ## 3. Estructura
 Ver tabla en README.md. Resumen: `mod\` (el mod; fuente de verdad), `laboratorio\` (mod `mascota-lab` con `/emilab` y `/emiproto`), `arte\` (PNG), `scripts\` (pipeline de sprites, diagnóstico, tsconfig), `docs\` (informes técnico y comparativo), `datos-laboratorio\` (medidas y bancos), `respaldos\` (copias antiguas; fuera de Git).
 
-Archivos del mod: `hooks\register.tsx` (único módulo de hooks), `sprites.ts` (429 KB generado, 5 tamaños × 12 × 4, RLE), `dibujo.ts` (celdas Raster, SVG, `elegirTam`, `planPanel`), `estados.ts` (frases, estados por herramienta), `deteccion.ts` (fallo real). Pruebas: `claude plugin test mod` (34), `claude plugin test laboratorio` (15), `claude plugin validate mod`. TypeScript: `npx -y -p typescript@5.6 tsc -p scripts\tsconfig\tc-mod` (y `tc2-lab`; ajusta rutas si falla).
+Archivos del mod: `hooks\register.tsx` (único módulo de hooks), `sprites.ts` (429 KB generado, 5 tamaños × 12 × 4, RLE), `dibujo.ts` (celdas Raster, SVG, `elegirTam`, `planPanel`), `estados.ts` (frases, estados por herramienta), `deteccion.ts` (fallo real). Pruebas: `claude plugin test mod` (58), `claude plugin test laboratorio` (21), `python mod\escritorio\prueba_humo.py`, `claude plugin validate mod`. TypeScript: `npx -y -p typescript@5.6 tsc -p scripts\tsconfig\tc-mod` (y `tc2-lab`; ajusta rutas si falla).
 
 ## 4. Cómo se llegó aquí (cronología)
 1. **Idea y primera versión.** Del pack `pack-mods-claude-code` (fuera de este proyecto) surgió la mascota. Se creó el mod a partir de la hoja de 12 estados y luego de `animacion de Emilia pixel de estados.png` (4 fotogramas por estado). No consume tokens (todo local).
@@ -60,16 +60,17 @@ Archivos del mod: `hooks\register.tsx` (único módulo de hooks), `sprites.ts` (
 2. Con una herramienta **rechazada de verdad**, que Emi no se asuste (la correlación `tool.check` → `tool.call` por `tool_use_id` **no se puede probar en el kit**; hay respaldo por texto `RECHAZO` y por `turno abortado`).
 3. Que cargue bien desde esta carpeta: `claude --plugin-dir "<ruta>\mod"`.
 
-**Decisión del usuario pendiente:** 4 fps (actual) o **8 fps con redibujo normal** (tick 125 ms, fotograma por tiempo; coste medido igual al actual). Comparar `/emiproto atomo8` con `/emiproto blit`. **No integrar sin su aprobación.**
+**Decidido:** todos los estados a 5 fps (ver §0).
 
 **Mejoras no hechas (proponer, no aplicar sin permiso):**
 - `classic.PermissionRequest` y despertar a Emi con `prompt.edit` (idea de otros repos, sin integrar).
 - Los **20 estados nuevos / 8 fotogramas** de `arte\animacion.png` y el sprite de banda 18×28 (el usuario dijo «para más adelante»).
-- Hacer los scripts de `scripts\pipeline-sprites` portables: rutas fijas a `C:\Users\Admin0011\Downloads\…`; apuntar a `..\..\arte\` y dejar un único script de regeneración documentado (hoy hay muchos de pruebas).
+- Iconos propios para «Atenuar fuera de Claude» y «Frase de estado» (`ICONO-INTERFAZ\8.png`, `9.png`).
+- Reducir `mod\escritorio\hd\` (97 MB, PNG de 1254 px): hace lenta la instalación.
 - Prueba automatizada para el panel Dock (hoy se prueba el cálculo `planPanel`, no el montaje real).
 - Decidir licencia del proyecto (el repo es público) (los PNG son del usuario; el arte de clawd NO se usa).
 - Guardar las preferencias de Emi (`$.store`, por PC) en un archivo exportable si el usuario quiere llevarlas a otra PC.
-- Quitar del repo `laboratorio\tests\tmp_cifras.test.ts` (marcador vacío) y los scripts duplicados entre `pipeline-sprites` y `diagnostico`.
+- Quitar del repo `laboratorio\tests\tmp_cifras.test.ts` (marcador vacío). (Los scripts duplicados ya se borraron el 2026-10-11.)
 
 ## 7. Resultados del banco `blit` (para no volver a medir)
 Panel acoplado, sprite M, 12 s por fase (`datos-laboratorio\bench_v2_2026-10-08.json`):

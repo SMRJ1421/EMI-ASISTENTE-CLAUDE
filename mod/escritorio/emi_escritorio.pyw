@@ -144,7 +144,7 @@ BARRAS = {'uso': 'Barra de uso de la sesión', 'cache': 'Barra del caché', 'tie
 UI = AQUI / 'interfaz'  # piezas del panel de configuración (las genera exportar_frames.py desde arte\\interfaz)
 TINTA_PANEL, ROJO_PANEL = '#5b1a2c', '#e0344f'
 PANEL_Y0 = 178  # y de la primera fila, bajo la cabecera
-NOMBRES_PANEL = {**BARRAS, 'cuadro': 'Ver cuadro de estados', 'oculta': 'Ocultar a Emi', 'caida': 'Caída al soltar', 'banda_app': 'Emi en la app de Claude', 'atenuar': 'Atenuar fuera de Claude'}
+NOMBRES_PANEL = {**BARRAS, 'cuadro': 'Ver cuadro de estados', 'oculta': 'Ocultar a Emi', 'mensaje': 'Frase de estado', 'caida': 'Caída al soltar', 'banda_app': 'Emi en la app de Claude', 'atenuar': 'Atenuar fuera de Claude'}
 # (clave, acción): en ese orden van las filas del panel; el icono es interfaz\\icono_<clave>.png. Todas llevan interruptor.
 FILAS_PANEL = [
     ('uso', lambda e: e.alternar_barra('uso')),
@@ -152,6 +152,7 @@ FILAS_PANEL = [
     ('tiempo', lambda e: e.alternar_barra('tiempo')),
     ('cuadro', lambda e: e.alternar_cuadro()),
     ('oculta', lambda e: e.alternar_oculta()),
+    ('mensaje', lambda e: e.alternar_mensaje()),
     ('caida', lambda e: e.alternar_caida()),
     ('banda_app', lambda e: e.alternar_banda_app()),
     ('atenuar', lambda e: e.alternar_atenuar()),
@@ -564,7 +565,7 @@ class Emi:
     def textos_panel(self) -> None:
         if self.panel is None:
             return
-        estado = {**self.barras, 'caida': self.caida, 'banda_app': self.banda_app, 'oculta': self.oculta, 'cuadro': self.cuadro_abierto(), 'atenuar': self.atenuar}
+        estado = {**self.barras, 'caida': self.caida, 'banda_app': self.banda_app, 'oculta': self.oculta, 'cuadro': self.cuadro_abierto(), 'atenuar': self.atenuar, 'mensaje': self.mensaje}
         for k, f in self.filas_panel.items():
             self.c_panel.itemconfig(f['texto'], text=NOMBRES_PANEL[k])
             f['activa'] = estado.get(k)
@@ -648,6 +649,7 @@ class Emi:
         self.mensaje = not self.mensaje
         self.guardar()
         self.actualizar_globo(*self.texto, self.color)
+        self.textos_panel()
 
     def actualizar_globo(self, frase: str, detalle: str, color: str = '') -> None:
         self.texto = (frase, detalle)
@@ -829,8 +831,8 @@ class Emi:
                 self.pasear()
             # Debajo del detalle, el modelo que trabaja ahora (la sesión o el ayudante al que delegó).
             nuevo = (str(mejor.get('frase') or FRASE_BASE.get(estado, '')), '\n'.join(filter(None, (str(mejor.get('detalle') or ''), str(mejor.get('modelo') or '')))))
-            # Las barras toman el dato de la sesión más reciente que lo tenga (otra sesión con un mod viejo no lo publica).
-            con_uso = max((d for d in vivas if isinstance(d.get('usado'), (int, float))), key=lambda d: d.get('vivo', 0), default={})
+            # Las barras toman el dato de la ventana de 5 h más nueva (reinicio ISO, ordena como texto): una sesión inactiva sigue viva pero con el % de una ventana ya renovada.
+            con_uso = max((d for d in vivas if isinstance(d.get('usado'), (int, float))), key=lambda d: (str(d.get('reinicio') or ''), d.get('vivo', 0)), default={})
             usado = con_uso.get('usado')
             self.color = str(mejor.get('color') or '')
             reinicio = con_uso.get('reinicio')

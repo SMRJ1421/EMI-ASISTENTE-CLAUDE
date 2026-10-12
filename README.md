@@ -8,7 +8,7 @@ En una sesión de **terminal** de Claude Code (2.1.294 o más nuevo, Windows):
 ```
 /plugin install mascota --marketplace SMRJ1421/EMI-ASISTENTE-CLAUDE
 ```
-Responde `y` a «Add marketplace?», elige el ámbito (usuario) con Enter, y listo: Emi funciona en esa sesión y en las siguientes (también en la app de escritorio, que carga los mods instalados desde la terminal). Para actualizar: `claude plugin update mascota`.
+Responde `y` a «Add marketplace?», elige el ámbito (usuario) con Enter, y listo: Emi funciona en esa sesión y en las siguientes (también en la app de escritorio, que carga los mods instalados desde la terminal). Para actualizar: `claude plugin marketplace update emilia-mascota` y luego `claude plugin update mascota` (o desinstalar e instalar de nuevo).
 
 Si la descarga tarda más de 2 minutos (conexión lenta), sube el límite antes de instalar: `CLAUDE_CODE_PLUGIN_GIT_TIMEOUT_MS=600000`.
 
@@ -45,7 +45,7 @@ Si la descarga tarda más de 2 minutos (conexión lenta), sube el límite antes 
 - Con arte nuevo (8 fotogramas, fondo transparente): pensando, responde, escribiendo, leyendo, terminado, hula, necesita, duerme. Con el arte original de 4 fotogramas: nueva, falla, para.
 - Emi escritorio (ventana flotante) con su «frase de estado» (el cuadro junto a ella; semitransparente con el ratón encima). Sonido de «listo» cada vez que Claude termina.
 - A su derecha, dos barras con marco: tiempo que le queda al caché de la conversación y % usado de la sesión. Van pegadas a Emi y no se mueven con su animación.
-- La tuerca ⚙ abre el panel de configuración (8 opciones con interruptor): barras, tiempo trabajado, cuadro de estados, ocultar a Emi, caída al soltar, Emi en la app de Claude y atenuar a Emi (40 %) cuando no estás en Claude ni en el escritorio.
+- La tuerca ⚙ abre el panel de configuración (9 opciones con interruptor): barras, tiempo trabajado, cuadro de estados, ocultar a Emi, frase de estado, caída al soltar, Emi en la app de Claude y atenuar a Emi (40 %) cuando no estás en Claude ni en el escritorio.
 - Sin verificar en terminal real: correlación `tool.check` → `tool.call`; aspecto en el Windows Terminal del autor de los sprites 60x60 y 28x28.
 
 ## Notas

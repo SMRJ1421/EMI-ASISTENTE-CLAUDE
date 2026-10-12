@@ -504,3 +504,16 @@ Sin cambios: panel acoplado, banda adaptativa, los 12 estados con sus 4 fotogram
 - **[LÍMITE]** El beneficio de pintado de las celdas con espacio en Windows Terminal no está medido; sí está probado que la imagen no cambia.
 - **[LÍMITE]** La correlación `tool.check` → `tool.call` (por `tool_use_id`) no se puede reproducir en el kit de pruebas; en la sesión real queda sin verificar. El texto del rechazo (`RECHAZO`) es una heurística que cubre el caso aunque `tool.check` no avise.
 - **[LÍMITE]** `classic.PermissionRequest` y el despertar con `prompt.edit` siguen sin integrarse.
+
+## 14. Actualización: Emi escritorio (2026-10-09 a 2026-10-12)
+
+El detalle paso a paso está en `docs\CHAT_ACTUALIZACION_ANIMACION.md` (secciones 39–51). Resumen:
+
+- **Emi escritorio** (`mod\escritorio\emi_escritorio.pyw`, Python + tkinter, sin Pillow): ventana transparente siempre visible con los fotogramas HD (1254 px reducidos con `subsample`), «frase de estado» (globo), estados propios (sujeta, caida, caminando), paseo y caída al soltar.
+- **Barras** de caché (1 h) y de uso de la sesión (5 h) con el marco de `arte\barra-emi-claude`. Emi y las barras comparten un único `Canvas`: un Canvas con el color transparente de la ventana no deja ver a Emi detrás, así que no se pueden solapar dos lienzos. La posición se calcula con el perfil fila a fila de Emi y del marco (2 px de separación) y con el dibujo más ancho de cada estado, para que las barras no se muevan con la animación.
+- **Panel de la tuerca** con el arte de `arte\interfaz` (piezas generadas por `exportar_frames.py` con Lanczos y alfa de todo o nada): 9 opciones con interruptor, entre ellas «Atenuar fuera de Claude» (40 % si la ventana de delante no es Claude ni el escritorio; `GetForegroundWindow` vía ctypes).
+
+### 14.1 Limitaciones
+
+- **[LÍMITE]** Los clics del panel, el arrastre sin caída y el cambio de opacidad al cambiar de ventana solo se probaron con la prueba de humo y capturas; falta la comprobación con el ratón real.
+- **[LÍMITE]** «Claude» se reconoce por el nombre del proceso (`claude.exe`, `windowsterminal.exe`); otra terminal (VS Code, por ejemplo) cuenta como «otra ventana».

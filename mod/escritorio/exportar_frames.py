@@ -160,7 +160,7 @@ if MARCO_ORIGEN.exists():
 # Se reducen con Lanczos (es ilustración grande, no píxel a píxel) y alfa de todo o nada, como el resto. Medidas en px del panel (ver emi_escritorio.pyw).
 INTERFAZ = RAIZ / 'arte' / 'interfaz'
 DESTINO_UI = Path(__file__).resolve().parent / 'interfaz'
-PANEL_ANCHO, PANEL_ALTO, FILA_ANCHO, FILA_ALTO, INTER_ALTO = 380, 617, 330, 46, 30  # 8 filas
+PANEL_ANCHO, PANEL_ALTO, FILA_ANCHO, FILA_ALTO, INTER_ALTO = 380, 669, 330, 46, 30  # 9 filas
 
 
 def alfa_binario(im: Image.Image) -> Image.Image:
@@ -209,11 +209,11 @@ if INTERFAZ.exists():
     print('interfaz:', sorted(p.name for p in DESTINO_UI.glob('*.png')))
 
 # Iconos de las filas del panel (arte\interfaz\ICONO-INTERFAZ\1..7.png, en el orden de FILAS_PANEL), a 34 px de alto.
-ICONOS = ['uso', 'cache', 'tiempo', 'cuadro', 'oculta', 'caida', 'banda_app', 'atenuar']
+ICONOS = ['uso', 'cache', 'tiempo', 'cuadro', 'oculta', 'caida', 'banda_app', 'atenuar', 'mensaje']
 if (INTERFAZ / 'ICONO-INTERFAZ').exists():
     for n, k in enumerate(ICONOS, 1):
         origen = INTERFAZ / 'ICONO-INTERFAZ' / f'{n}.png'
-        im = alfa_binario(Image.open(origen if origen.exists() else INTERFAZ / 'ICONO-INTERFAZ' / '5.png'))  # sin icono propio (8: transparente fuera de Claude), el del ojo
+        im = alfa_binario(Image.open(origen if origen.exists() else INTERFAZ / 'ICONO-INTERFAZ' / '5.png'))  # sin icono propio (8: atenuar, 9: frase de estado), el del ojo
         im = im.crop(im.getbbox())
         lado = 34
         alfa_binario(im.resize((round(im.width * lado / max(im.size)), round(im.height * lado / max(im.size))), Image.LANCZOS)).save(DESTINO_UI / f'icono_{k}.png', optimize=True)
